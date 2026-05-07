@@ -18,7 +18,7 @@
 ---
 
 <div align="center">
-<img src="screenshots/01-demo-vtuber.png" alt="演示截图" width="80%">
+<img src="01-demo-vtuber.png" alt="演示截图" width="80%">
 <br>
 <sub>实测：识别 Vtuber 直播音频（不破湊／にじさんじ）</sub>
 </div>
@@ -31,7 +31,7 @@
 
 ### 这是什么
 
-classAko 是一个**留学生上日语课用的浏览器字幕工具**。打开网页 → 点开始 → 老师讲日语，左边实时滚动日文识别，右边每 30 秒整段翻译成中文。下课后可以直接保存成笔记 txt。
+classAko 是一个**留学生上日语课用的浏览器字幕工具**。打开网页 → 点开始 → 老师讲日语，实时滚动日文识别，每 30 秒整段翻译成中文。下课后可以直接保存成笔记 txt。
 
 完全在浏览器里跑，**不用安装任何软件**，开源免费。
 
@@ -46,15 +46,15 @@ classAko 是一个**留学生上日语课用的浏览器字幕工具**。打开�
 
 1. 用 **Edge 或 Chrome** 浏览器访问 [memeku9.github.io/classAko](https://memeku9.github.io/classAko/)
 2. 第一次会弹麦克风权限，点**允许**
-3. 点 ▶ **开始** —— 老师讲话，左边日文实时滚动
+3. 点 ▶ **开始** —— 老师讲话，日文实时滚动
 4. 切换到 **中文** 页 —— 每 30 秒整段中文翻译
 5. 下课点 **保存** —— 进 **笔记** 面板下载 txt
 
 <div align="center">
 <table>
 <tr>
-<td width="50%"><img src="screenshots/02-japanese-stream.png" alt="日文识别"></td>
-<td width="50%"><img src="screenshots/03-chinese-translation.png" alt="中文翻译"></td>
+<td width="50%"><img src="02-japanese-stream.png" alt="日文识别"></td>
+<td width="50%"><img src="03-chinese-translation.png" alt="中文翻译"></td>
 </tr>
 <tr>
 <td align="center"><sub>日文页·实时滚动</sub></td>
@@ -73,7 +73,7 @@ classAko 是一个**留学生上日语课用的浏览器字幕工具**。打开�
 ### 笔记导出
 
 <div align="center">
-<img src="screenshots/04-notes-export.png" alt="笔记面板" width="80%">
+<img src="04-notes-export.png" alt="笔记面板" width="80%">
 </div>
 
 每次保存的内容都存在浏览器本地，**不上传任何服务器**。可以随时复制、下载 txt 或删除。文件名带日期时间戳，方便归档。
@@ -121,7 +121,7 @@ GPL-3.0，详见 [LICENSE](LICENSE)。
 
 ### これは何？
 
-classAko は、**日本で授業を受ける留学生のためのブラウザ字幕ツール**です。Webページを開いて「開始」ボタンを押すだけで、先生の日本語を左側にリアルタイム表示、右側に30秒ごとの中国語訳をまとめて表示します。授業後にテキストファイルとしてノート保存も可能。
+classAko は、**日本で授業を受ける留学生のためのブラウザ字幕ツール**です。Webページを開いて「開始」ボタンを押すだけで、先生の日本語をにリアルタイム表示、30秒ごとの中国語訳をまとめて表示します。授業後にテキストファイルとしてノート保存も可能。
 
 完全にブラウザ上で動作し、**インストール不要**、オープンソース・無料です。
 
@@ -136,7 +136,7 @@ classAko は、**日本で授業を受ける留学生のためのブラウザ字
 
 1. **Edge または Chrome** ブラウザで [memeku9.github.io/classAko](https://memeku9.github.io/classAko/) を開く
 2. 初回はマイク許可ダイアログが出るので**許可**を押す
-3. ▶ **開始** ボタンを押す ── 左側に日本語がリアルタイム表示
+3. ▶ **開始** ボタンを押す ── 日本語がリアルタイム表示
 4. **中文** タブに切り替え ── 30秒ごとに中国語訳がまとめて表示
 5. 授業後、**保存** を押す ── **笔记**（ノート）パネルからtxtダウンロード可能
 
