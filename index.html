@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>classroom_sub — AKO</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg:       #0c0c0c;
+    --bg2:      #111111;
+    --border:   #2a2a2a;
+    --text:     #e6e6e6;
+    --dim:      #888888;
+    --accent:   #4ec9e1;
+    --btn-bg:   #1a1a1a;
+    --btn-text: #c8c8c8;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Consolas', 'Courier New', monospace;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    gap: 6px;
+    overflow: hidden;
+  }
+
+  #status { font-size: 11px; color: var(--text); min-height: 16px; flex-shrink: 0; }
+
+  .page {
+    flex: 1;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    overflow-y: auto;
+    padding: 8px 10px;
+    font-size: 13px;
+    line-height: 1.75;
+    display: none;
+  }
+  .page.active { display: block; }
+  .page::-webkit-scrollbar { width: 5px; }
+  .page::-webkit-scrollbar-track { background: var(--bg); }
+  .page::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .line-dim { color: var(--dim); }
+  .line-jp  { color: #e6e6e6; }
+
+  .cn-block { margin-bottom: 16px; }
+  .cn-block .src { color: var(--dim); font-size: 13px; margin-bottom: 4px; line-height: 1.75; }
+  .cn-block .trs { color: var(--accent); line-height: 1.7; }
+  .cn-block .pending { color: #333; font-style: italic; }
+
+  #btn-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  button {
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    border: 1px solid var(--border);
+    font-family: inherit;
+    font-size: 12px;
+    height: 28px;
+    padding: 0 12px;
+    cursor: pointer;
+    transition: border-color 0.12s;
+    white-space: nowrap;
+  }
+  button:hover    { border-color: #555; }
+  button:active   { background: #2a2a2a; }
+  button:disabled { color: #333; border-color: #1a1a1a; cursor: default; }
+  button.active   { border-color: #aaa; color: #fff; }
+
+  #spacer { flex: 1; }
+  #countdown { font-size: 10px; color: var(--dim); min-width: 24px; text-align: right; }
+
+  #save-panel {
+    display: none;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    padding: 10px;
+    flex-shrink: 0;
+  }
+  #save-panel.open { display: block; }
+  #save-list { overflow-y: auto; max-height: 110px; margin-bottom: 8px; }
+  #save-list::-webkit-scrollbar { width: 4px; }
+  #save-list::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .save-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 0;
+    border-bottom: 1px solid #1a1a1a;
+    font-size: 13px;
+    color: var(--dim);
+  }
+  .save-item:last-child { border-bottom: none; }
+  .save-item span { flex: 1; }
+  .save-item-btns { display: flex; gap: 4px; }
+  .save-item-btns button { height: 22px; font-size: 12px; padding: 0 8px; }
+
+  #hint { font-size: 10px; color: #252525; text-align: right; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<div id="status">[待机]</div>
+
+<div id="page-jp" class="page active"></div>
+<div id="page-cn" class="page"></div>
+
+<div id="btn-row">
+  <button id="btn-start" onclick="onStartClick()">▶ 开始</button>
+  <button id="btn-stop"  onclick="onStopClick()" disabled>■ 停止</button>
+  <span id="spacer"></span>
+  <span id="countdown"></span>
+  <button onclick="clearAll()">清空</button>
+  <button onclick="saveSession()">保存</button>
+  <button onclick="toggleSavePanel()">笔记</button>
+  <button id="mode-jp" class="active" onclick="setMode('jp')">日文</button>
+  <button id="mode-cn" onclick="setMode('cn')">中文</button>
+</div>
+
+<div id="save-panel">
+  <div id="save-list"></div>
+  <button onclick="clearSaves()" style="font-size:12px;height:24px;padding:0 8px;color:#444;">清空所有记录</button>
+</div>
+
+<div id="hint">日文页实时显示 · 中文页每30秒整段翻译</div>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════════════
+//  状态机 — 整个程序只有一个状态变量，所有逻辑从它推导
+// ═══════════════════════════════════════════════════════════════
+const STATE = { IDLE: 'idle', RUNNING: 'running', STOPPING: 'stopping' };
+let state = STATE.IDLE;
+
+// ═══════════════════════════════════════════════════════════════
+//  全局变量 — 全部集中在这里，方便看清依赖
+// ═══════════════════════════════════════════════════════════════
+let recognition = null;     // SpeechRecognition对象，全程复用
+let restartTimer = null;    // 重启定时器
+let cdInterval = null;      // 30秒倒计时
+let countdown = 30;
+let jpAllLines = [];        // 全程日文（保存/复制用）
+let jpBatch = [];           // 当前30秒缓冲
+let pendingBlock = null;    // 中文页待翻译块
+
+// ═══════════════════════════════════════════════════════════════
+//  UI辅助函数
+// ═══════════════════════════════════════════════════════════════
+function setStatus(msg) {
+  document.getElementById('status').textContent = msg;
+}
+
+function scrollBottom(id) {
+  const el = document.getElementById(id);
+  el.scrollTop = el.scrollHeight;
+}
+
+function appendJp(text, cls) {
+  const el = document.getElementById('page-jp');
+  const div = document.createElement('div');
+  div.className = cls;
+  div.textContent = text;
+  el.appendChild(div);
+  scrollBottom('page-jp');
+}
+
+function syncButtons() {
+  const start = document.getElementById('btn-start');
+  const stop  = document.getElementById('btn-stop');
+  start.disabled = (state !== STATE.IDLE);
+  stop.disabled  = (state !== STATE.RUNNING);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  翻译 — 谷歌免费接口，失败降级
+// ═══════════════════════════════════════════════════════════════
+async function translateGoogle(text) {
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=ja&tl=zh-CN&dt=t&q=${encodeURIComponent(text)}`;
+    const r = await fetch(url);
+    const data = await r.json();
+    return data[0].map(x => x && x[0]).filter(Boolean).join('');
+  } catch(e) {
+    return `[翻译失败·原文: ${text}]`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  中文页块管理
+// ═══════════════════════════════════════════════════════════════
+function addPendingBlock(lines) {
+  const page = document.getElementById('page-cn');
+  const block = document.createElement('div');
+  block.className = 'cn-block';
+  const src = document.createElement('div');
+  src.className = 'src';
+  src.textContent = lines.join('　');
+  const trs = document.createElement('div');
+  trs.className = 'trs pending';
+  trs.textContent = '[翻译中...]';
+  block.appendChild(src);
+  block.appendChild(trs);
+  page.appendChild(block);
+  scrollBottom('page-cn');
+  pendingBlock = { trs };
+}
+
+function resolvePending(cnText) {
+  if (!pendingBlock) return;
+  pendingBlock.trs.classList.remove('pending');
+  pendingBlock.trs.textContent = cnText;
+  pendingBlock = null;
+  scrollBottom('page-cn');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  30秒批次定时器
+// ═══════════════════════════════════════════════════════════════
+function startCountdown() {
+  countdown = 30;
+  document.getElementById('countdown').textContent = '30s';
+  cdInterval = setInterval(() => {
+    countdown--;
+    document.getElementById('countdown').textContent = `${countdown}s`;
+    if (countdown <= 0) {
+      flushBatch();
+      countdown = 30;
+    }
+  }, 1000);
+}
+
+function stopCountdown() {
+  clearInterval(cdInterval);
+  cdInterval = null;
+  document.getElementById('countdown').textContent = '';
+}
+
+async function flushBatch() {
+  if (!jpBatch.length) { countdown = 30; return; }
+  const lines = [...jpBatch];
+  jpBatch = [];
+  countdown = 30;
+  addPendingBlock(lines);
+  const cn = await translateGoogle(lines.join(''));
+  resolvePending(cn);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  核心：识别引擎管理
+// ═══════════════════════════════════════════════════════════════
+function buildRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) throw new Error('NO_SR');
+  
+  const r = new SR();
+  r.lang = 'ja-JP';
+  r.continuous = true;
+  r.interimResults = true;
+  
+  r.onstart = () => {
+    if (state === STATE.RUNNING) setStatus('[监听中]');
+  };
+  
+  r.onresult = (e) => {
+    if (state !== STATE.RUNNING) return;
+    let final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript;
+    }
+    if (!final.trim()) return;
+    const jp = final.trim();
+    jpAllLines.push(jp);
+    jpBatch.push(jp);
+    appendJp(jp, 'line-jp');
+  };
+  
+  r.onerror = (e) => {
+    // no-speech / aborted 不算错，让 onend 处理重启
+    if (e.error === 'no-speech' || e.error === 'aborted') return;
+    
+    // not-allowed 是终态，停止整个流程
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+      setStatus('[麦克风被拒绝] 点地址栏左侧的锁/感叹号图标→麦克风→允许，然后刷新页面');
+      hardStop();
+      return;
+    }
+    
+    // 其他错误（network/audio-capture等）显示但仍尝试重启
+    setStatus(`[警告] ${e.error}，正在重试...`);
+  };
+  
+  r.onend = () => {
+    if (state === STATE.RUNNING) {
+      // 老师停顿/识别引擎自然结束，自动重启
+      scheduleRestart();
+    }
+    // STOPPING状态下onend自然结束流程，不做处理
+  };
+  
+  return r;
+}
+
+// 退避重启：避免错误风暴时疯狂调start导致按钮卡死
+function scheduleRestart() {
+  clearTimeout(restartTimer);
+  restartTimer = setTimeout(() => {
+    if (state !== STATE.RUNNING) return;
+    if (!recognition) return;
+    try {
+      recognition.start();
+    } catch(e) {
+      // InvalidStateError: 还没真正stop完，再等一下
+      if (e.name === 'InvalidStateError') {
+        setTimeout(() => {
+          if (state === STATE.RUNNING && recognition) {
+            try { recognition.start(); } catch(_) {}
+          }
+        }, 500);
+      } else {
+        setStatus(`[重启失败] ${e.message}`);
+        hardStop();
+      }
+    }
+  }, 250);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  按钮事件 — 用户唯一交互入口
+// ═══════════════════════════════════════════════════════════════
+function onStartClick() {
+  if (state !== STATE.IDLE) return;
+  
+  setStatus('[正在启动...]');
+  state = STATE.RUNNING;
+  syncButtons();
+  
+  try {
+    if (!recognition) recognition = buildRecognition();
+    recognition.start();
+    appendJp('>> 开始监听', 'line-dim');
+    startCountdown();
+  } catch(err) {
+    if (err.message === 'NO_SR') {
+      setStatus('[错误] 此浏览器不支持语音识别，请用 Edge 或 Chrome');
+    } else if (err.name === 'InvalidStateError') {
+      // 已经在跑了，不算错
+      setStatus('[监听中]');
+      return;
+    } else {
+      setStatus(`[启动失败] ${err.message || err.name}`);
+    }
+    hardStop();
+  }
+}
+
+function onStopClick() {
+  if (state !== STATE.RUNNING) return;
+  
+  state = STATE.STOPPING;
+  syncButtons();
+  setStatus('[停止中...]');
+  
+  clearTimeout(restartTimer);
+  restartTimer = null;
+  
+  if (recognition) {
+    try { recognition.stop(); } catch(e) {}
+  }
+  
+  stopCountdown();
+  if (jpBatch.length) flushBatch();
+  appendJp('>> 停止', 'line-dim');
+  
+  // 给 onend 一点时间触发，然后清理状态
+  setTimeout(() => {
+    state = STATE.IDLE;
+    syncButtons();
+    setStatus('[待机]');
+  }, 300);
+}
+
+// 强制停止（出错时用）
+function hardStop() {
+  state = STATE.IDLE;
+  clearTimeout(restartTimer);
+  restartTimer = null;
+  stopCountdown();
+  if (recognition) {
+    try { recognition.abort(); } catch(e) {}
+  }
+  syncButtons();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  其他功能（不变）
+// ═══════════════════════════════════════════════════════════════
+function setMode(mode) {
+  document.getElementById('page-jp').classList.toggle('active', mode === 'jp');
+  document.getElementById('page-cn').classList.toggle('active', mode === 'cn');
+  document.getElementById('mode-jp').classList.toggle('active', mode === 'jp');
+  document.getElementById('mode-cn').classList.toggle('active', mode === 'cn');
+}
+
+function clearAll() {
+  document.getElementById('page-jp').innerHTML = '';
+  document.getElementById('page-cn').innerHTML = '';
+  jpAllLines = []; jpBatch = []; pendingBlock = null;
+}
+
+function saveSession() {
+  if (!jpAllLines.length) { setStatus('[没有内容可保存]'); return; }
+  const now = new Date();
+  const label = `${now.getMonth()+1}.${now.getDate()}  ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const saves = getSaves();
+  saves.unshift({ label, key: Date.now().toString(), content: jpAllLines.join('\n') });
+  localStorage.setItem('classroom_sub_saves', JSON.stringify(saves));
+  setStatus(`[已保存: ${label}]`);
+  setTimeout(() => { if (state === STATE.IDLE) setStatus('[待机]'); else setStatus('[监听中]'); }, 2000);
+  renderSaveList();
+}
+
+function getSaves() {
+  try { return JSON.parse(localStorage.getItem('classroom_sub_saves') || '[]'); } catch(e) { return []; }
+}
+
+function renderSaveList() {
+  const saves = getSaves();
+  const el = document.getElementById('save-list');
+  if (!saves.length) {
+    el.innerHTML = '<div style="color:#2a2a2a;font-size:11px;padding:4px 0;">暂无记录</div>';
+    return;
+  }
+  el.innerHTML = saves.map((s, i) => `
+    <div class="save-item">
+      <span>${s.label}</span>
+      <div class="save-item-btns">
+        <button onclick="copyRecord(${i})">复制</button>
+        <button onclick="downloadRecord(${i})">下载</button>
+        <button onclick="deleteRecord(${i})" style="color:#555;">删</button>
+      </div>
+    </div>`).join('');
+}
+
+function copyRecord(i) {
+  const s = getSaves()[i];
+  navigator.clipboard.writeText(s.content).then(() => {
+    setStatus(`[已复制: ${s.label}]`);
+    setTimeout(() => { if (state === STATE.IDLE) setStatus('[待机]'); else setStatus('[监听中]'); }, 2000);
+  });
+}
+
+function downloadRecord(i) {
+  const s = getSaves()[i];
+  const blob = new Blob([s.content], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `课堂字幕_${s.label.replace(/[\s:]/g, '_')}.txt`;
+  a.click();
+}
+
+function deleteRecord(i) {
+  const saves = getSaves();
+  saves.splice(i, 1);
+  localStorage.setItem('classroom_sub_saves', JSON.stringify(saves));
+  renderSaveList();
+}
+
+function clearSaves() {
+  if (!confirm('确定清空所有保存的记录？')) return;
+  localStorage.removeItem('classroom_sub_saves');
+  renderSaveList();
+}
+
+function toggleSavePanel() {
+  const panel = document.getElementById('save-panel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) renderSaveList();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  启动自检
+// ═══════════════════════════════════════════════════════════════
+renderSaveList();
+
+(async function init() {
+  // 检查是否iOS设备（Apple限制了iOS上所有浏览器的SpeechRecognition实现）
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) 
+                || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (isIOS) {
+    setStatus('[iOS不支持] 由于Apple限制，iPhone/iPad无法使用此工具，请用电脑(Windows/Mac)的Edge或Chrome');
+    document.getElementById('btn-start').disabled = true;
+    return;
+  }
+  
+  // 检查是否HTTPS或localhost（file://下Web Speech会静默失败）
+  const isFile = location.protocol === 'file:';
+  if (isFile) {
+    setStatus('[必须通过 http/https 访问] 不要双击HTML，用本地服务器或部署到GitHub Pages');
+    return;
+  }
+  
+  // 检查浏览器支持
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    setStatus('[此浏览器不支持] 请用 Edge 或 Chrome');
+    return;
+  }
+  
+  // 检查麦克风权限
+  if (navigator.permissions) {
+    try {
+      const p = await navigator.permissions.query({ name: 'microphone' });
+      if (p.state === 'denied') {
+        setStatus('[麦克风已被禁用] 点地址栏左侧的锁/感叹号图标→麦克风→允许，然后刷新');
+      } else if (p.state === 'granted') {
+        setStatus('[待机·麦克风已授权]');
+        setTimeout(() => { if (state === STATE.IDLE) setStatus('[待机]'); }, 2500);
+      } else {
+        setStatus('[待机·首次开始时会请求麦克风权限]');
+        setTimeout(() => { if (state === STATE.IDLE) setStatus('[待机]'); }, 4000);
+      }
+    } catch(e) { /* 不支持query就跳过 */ }
+  }
+})();
+</script>
+</body>
+</html>
