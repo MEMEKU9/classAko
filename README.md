@@ -86,7 +86,7 @@ classAko 是一个**留学生上日语课用的浏览器字幕工具**。打开�
 | Mac 电脑 | Chrome / Edge |  流畅 |
 | Mac 电脑 | Safari |  能用但不稳定 |
 | Android 手机 | Chrome | 能用，UI 未为手机优化 |
-| iPhone / iPad | 任意浏览器 | X Apple 限制，不支持 |
+| iPhone / iPad | 任意浏览器 |  Apple 限制，不支持 |
 
 ### 注意
 
@@ -155,7 +155,7 @@ classAko は、**日本で授業を受ける留学生のためのブラウザ字
 | Mac | Chrome / Edge | 完全対応 |
 | Mac | Safari |  動くが不安定 |
 | Android | Chrome |  動くが、UIはPC最適化 |
-| iPhone / iPad | 全ブラウザ | X Apple制限により非対応 |
+| iPhone / iPad | 全ブラウザ |  Apple制限により非対応 |
 
 ### 正直なところ
 
@@ -185,5 +185,5 @@ GPL-3.0、詳細は [LICENSE](LICENSE) を参照。
 ---
 
 <div align="center">
-<sub>Made with ❤ by メメク · Dedicated to international students in Japan</sub>
+<sub>Made with  by メメク · Dedicated to international students in Japan</sub>
 </div>
