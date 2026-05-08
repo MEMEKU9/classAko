@@ -6,10 +6,10 @@
 
 **留学生課堂日译中实时字幕工具 / 留学生のための日中リアルタイム字幕ツール**
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-lightgrey.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-lightgrey)](https://github.com/MEMEKU9/classAko)
-[![Browser](https://img.shields.io/badge/Browser-Edge%20%7C%20Chrome-success)](https://github.com/MEMEKU9/classAko)
-[![Status](https://img.shields.io/badge/Status-Stable-brightgreen)](https://github.com/MEMEKU9/classAko)
+[![Browser](https://img.shields.io/badge/Browser-Edge%20%7C%20Chrome-lightgrey)](https://github.com/MEMEKU9/classAko)
+[![Status](https://img.shields.io/badge/Status-Stable-lightgrey)](https://github.com/MEMEKU9/classAko)
 
 [▼ 立即使用 / 今すぐ使う](https://memeku9.github.io/classAko/)
 
