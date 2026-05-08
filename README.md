@@ -82,11 +82,11 @@ classAko 是一个**留学生上日语课用的浏览器字幕工具**。打开�
 
 | 设备 | 浏览器 | 支持情况 |
 |---|---|---|
-| Windows 电脑 | Edge / Chrome | ✅ 完美 |
-| Mac 电脑 | Chrome / Edge | ✅ 完美 |
-| Mac 电脑 | Safari | ⚠️ 能用但不稳定 |
-| Android 手机 | Chrome | ⚠️ 能用，UI 未为手机优化 |
-| iPhone / iPad | 任意浏览器 | ❌ Apple 限制，不支持 |
+| Windows 电脑 | Edge / Chrome |  流畅 |
+| Mac 电脑 | Chrome / Edge |  流畅 |
+| Mac 电脑 | Safari |  能用但不稳定 |
+| Android 手机 | Chrome | 能用，UI 未为手机优化 |
+| iPhone / iPad | 任意浏览器 | X Apple 限制，不支持 |
 
 ### 注意
 
@@ -94,7 +94,7 @@ classAko 是一个**留学生上日语课用的浏览器字幕工具**。打开�
 
 - **适合有一定日语基础的同学**作为听课辅助参考
 - **不适合完全零基础**靠它当同传
-- **请勿与商业产品（讯飞听见、有道、Otter 等）对标**——那些有专业模型和团队，本工具是个人独立开发的免费小工具
+- **请勿与商业产品（讯飞听见、有道、Otter 等）对标**本工具是个人独立开发的免费小工具
 
 ### 隐私
 
@@ -151,11 +151,11 @@ classAko は、**日本で授業を受ける留学生のためのブラウザ字
 
 | デバイス | ブラウザ | 対応状況 |
 |---|---|---|
-| Windows PC | Edge / Chrome | ✅ 完全対応 |
-| Mac | Chrome / Edge | ✅ 完全対応 |
-| Mac | Safari | ⚠️ 動くが不安定 |
-| Android | Chrome | ⚠️ 動くが、UIはPC最適化 |
-| iPhone / iPad | 全ブラウザ | ❌ Apple制限により非対応 |
+| Windows PC | Edge / Chrome |  完全対応 |
+| Mac | Chrome / Edge | 完全対応 |
+| Mac | Safari |  動くが不安定 |
+| Android | Chrome |  動くが、UIはPC最適化 |
+| iPhone / iPad | 全ブラウザ | X Apple制限により非対応 |
 
 ### 正直なところ
 
