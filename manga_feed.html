@@ -31,6 +31,24 @@
   .titlebar .dot{width:13px;height:13px;border-radius:50%;
     background:radial-gradient(circle at 35% 30%,#fff 0%,#cfd2d6 40%,#8b8e92 100%);
     box-shadow:inset 0 1px 1px rgba(255,255,255,.8),0 1px 1px rgba(0,0,0,.35);}
+  .tabs{display:flex;gap:8px;padding:8px 10px;position:sticky;
+    top:calc(35px + env(safe-area-inset-top));z-index:4;
+    background:rgba(245,246,248,.1);
+    -webkit-backdrop-filter:blur(4px) saturate(150%);
+    backdrop-filter:blur(4px) saturate(150%);
+    border-bottom:1px solid rgba(150,150,150,.22);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.7);}
+  .tab{position:relative;font-family:var(--face);font-size:14px;font-weight:bold;
+    padding:7px 20px;cursor:pointer;color:#3a3a3a;border:1px solid #a9acb0;
+    border-radius:999px;overflow:hidden;
+    background:linear-gradient(180deg,#fff 0%,#f1f2f4 48%,#e2e4e6 50%,#eef0f2 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 1px 2px rgba(0,0,0,.18);}
+  .tab::before{content:"";position:absolute;left:8%;right:8%;top:1px;height:42%;
+    border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,0));}
+  .tab.on{color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.35);border-color:#6f7276;
+    background:linear-gradient(180deg,#9a9da1 0%,#7c7f83 48%,#5e6165 50%,#6f7276 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 1px 2px rgba(0,0,0,.25);}
+  .tab.on::before{background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0));}
   .grid{padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   .card{background:linear-gradient(180deg,#fff,#f4f5f6);border:1px solid #c3c6c9;
     border-radius:6px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;
@@ -59,6 +77,11 @@
 <body>
 <div class="win">
   <div class="titlebar"><span class="dot"></span>漫画庫 — Internet Archive</div>
+  <div class="tabs" id="tabs">
+    <button class="tab on" data-tab="manga">漫画</button>
+    <button class="tab" data-tab="art">画集</button>
+    <button class="tab" data-tab="hist">履歴</button>
+  </div>
   <div class="grid" id="grid"></div>
   <div class="center" id="status">読込中…</div>
   <button class="more" id="more" style="display:none">もっと見る</button>
@@ -74,8 +97,19 @@ var grid = document.getElementById("grid");
 var statusEl = document.getElementById("status");
 var moreBtn = document.getElementById("more");
 
+var curTab = "manga";
+var NOT_ADULT =
+    ' AND NOT collection:eroticabooks'
+  + ' AND NOT subject:erotic AND NOT subject:erotica'
+  + ' AND NOT subject:hentai AND NOT subject:adult'
+  + ' AND NOT subject:ecchi AND NOT subject:nsfw'
+  + ' AND NOT subject:pornography AND NOT subject:nude';
+var QUERIES = {
+  manga: '(manga) AND year:[1980 TO 2010] AND mediatype:texts' + NOT_ADULT,
+  art: '(artbook OR "art book" OR illustrations OR "art works" OR artworks OR 画集 OR 設定資料集 OR "visual book") AND year:[1980 TO 2010] AND mediatype:texts' + NOT_ADULT
+};
 function rawAPI(p){
-  var q = '(manga) AND year:[1980 TO 2010] AND mediatype:texts';
+  var q = QUERIES[curTab];
   return 'https://archive.org/advancedsearch.php'
     + '?q=' + encodeURIComponent(q)
     + '&fl[]=identifier&fl[]=title&fl[]=year'
@@ -94,13 +128,44 @@ function apiURL(p){ return PROXIES[proxyIdx](rawAPI(p)); }
 function imgURL(id){ return 'https://archive.org/services/img/' + id; }
 function detailURL(id){ return 'https://archive.org/details/' + id; }
 
+var HIST_KEY = "manga_hist_v1";
+var HIST = [];
+function loadHist(){
+  try{
+    var raw = localStorage.getItem(HIST_KEY);
+    if(raw){ var a = JSON.parse(raw); if(a && a.length) HIST = a; }
+  }catch(e){}
+}
+function saveHist(){
+  try{ localStorage.setItem(HIST_KEY, JSON.stringify(HIST.slice(0,200))); }catch(e){}
+}
+function pushHist(item){
+  // 去重：已存在就先移除，再放到最前（最近看的在前）
+  for(var i=0;i<HIST.length;i++){
+    if(HIST[i].id === item.id){ HIST.splice(i,1); break; }
+  }
+  HIST.unshift(item);
+  saveHist();
+}
+loadHist();
+
+var BLOCK = ["erotic","erotica","hentai","ecchi","nsfw","adult","porn",
+  "nude","xxx","18+","seijin","ero-","r18","r-18","doujin"];
+function isBlocked(title, id){
+  var s = ((title || "") + " " + (id || "")).toLowerCase();
+  for(var i=0;i<BLOCK.length;i++){ if(s.indexOf(BLOCK[i]) >= 0) return true; }
+  return false;
+}
+
 function addCard(doc){
   if(!doc.identifier || seen[doc.identifier]) return;
+  var title0 = doc.title || doc.identifier;
+  if(Array.isArray(title0)) title0 = title0[0];
+  if(isBlocked(title0, doc.identifier)) return;
   seen[doc.identifier] = 1;
   var card = document.createElement("div");
   card.className = "card";
-  var title = doc.title || doc.identifier;
-  if(Array.isArray(title)) title = title[0];
+  var title = title0;
   var year = doc.year || "";
   card.innerHTML =
     '<img class="cover" loading="lazy" src="' + imgURL(doc.identifier) + '" '
@@ -110,6 +175,7 @@ function addCard(doc){
     + '</div>';
   card.querySelector(".ttl").textContent = title;
   card.addEventListener("click", function(){
+    pushHist({id:doc.identifier, title:title0, year:doc.year || ""});
     window.open(detailURL(doc.identifier), "_blank");
   });
   grid.appendChild(card);
@@ -154,6 +220,58 @@ function load(){
 }
 
 moreBtn.addEventListener("click", load);
+
+var tabBtns = document.querySelectorAll(".tab");
+function switchTab(name){
+  if(name === curTab) return;
+  curTab = name;
+  for(var i=0;i<tabBtns.length;i++){
+    tabBtns[i].classList.toggle("on", tabBtns[i].getAttribute("data-tab") === name);
+  }
+  page = 1; loading = false; done = false; seen = {}; proxyIdx = 0;
+  grid.innerHTML = "";
+  moreBtn.style.display = "none";
+  if(name === "hist"){ renderHist(); } else { load(); }
+}
+
+function renderHist(){
+  statusEl.style.display = "none";
+  if(HIST.length === 0){
+    statusEl.style.display = "";
+    statusEl.textContent = "まだ履歴がありません";
+    return;
+  }
+  HIST.forEach(function(it){
+    var card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML =
+      '<img class="cover" loading="lazy" src="' + imgURL(it.id) + '" '
+      + 'onerror="this.classList.add(\'ph\');this.removeAttribute(\'src\');this.textContent=\'No Cover\';">'
+      + '<div class="meta"><div class="ttl"></div>'
+      + (it.year ? '<div class="yr">' + it.year + '</div>' : '')
+      + '</div>';
+    card.querySelector(".ttl").textContent = it.title || it.id;
+    card.addEventListener("click", function(){
+      pushHist(it);
+      window.open(detailURL(it.id), "_blank");
+    });
+    grid.appendChild(card);
+  });
+  var clr = document.createElement("button");
+  clr.className = "more"; clr.textContent = "履歴をクリア";
+  clr.style.gridColumn = "1 / -1";
+  clr.addEventListener("click", function(){
+    HIST = []; saveHist(); grid.innerHTML = "";
+    statusEl.style.display = ""; statusEl.textContent = "まだ履歴がありません";
+  });
+  grid.appendChild(clr);
+}
+for(var t=0;t<tabBtns.length;t++){
+  tabBtns[t].addEventListener("click", function(){
+    switchTab(this.getAttribute("data-tab"));
+  });
+}
+
 load();
 </script>
 </body>
