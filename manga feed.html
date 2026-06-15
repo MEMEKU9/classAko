@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="漫画庫">
+<meta name="theme-color" content="#54565a">
+<title>漫画庫 — IA Manga</title>
+<style>
+  :root{
+    --silver:#d6d8da; --silver-d:#9a9da1; --silver-l:#ffffff;
+    --bar-top:#6a6d72; --bar-bot:#3d3f43;
+    --paper:#ffffff; --ink:#1a1a1a; --sub:#5b5e63;
+    --face:"Hiragino Sans","Noto Sans CJK JP","Microsoft YaHei",sans-serif;
+    --mono:"Courier New",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:#7d8488;font-family:var(--face);color:var(--ink);}
+  .win{max-width:680px;margin:0 auto;min-height:100vh;background:var(--silver);
+    border-left:2px solid var(--silver-l);border-top:2px solid var(--silver-l);
+    border-right:2px solid var(--silver-d);border-bottom:2px solid var(--silver-d);}
+  .titlebar{background:linear-gradient(180deg,var(--bar-top) 0%,#54565a 48%,var(--bar-bot) 100%);
+    color:#fff;font-family:var(--mono);font-weight:bold;font-size:15px;
+    padding:7px 11px;padding-top:calc(7px + env(safe-area-inset-top));
+    display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:5;
+    text-shadow:0 1px 1px rgba(0,0,0,.45);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -1px 0 rgba(0,0,0,.3);}
+  .titlebar .dot{width:13px;height:13px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#fff 0%,#cfd2d6 40%,#8b8e92 100%);
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.8),0 1px 1px rgba(0,0,0,.35);}
+  .grid{padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .card{background:linear-gradient(180deg,#fff,#f4f5f6);border:1px solid #c3c6c9;
+    border-radius:6px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 1px 2px rgba(0,0,0,.08);}
+  .card:active{box-shadow:inset 0 1px 3px rgba(0,0,0,.2);}
+  .cover{width:100%;aspect-ratio:3/4;background:#e4e6e8;object-fit:cover;display:block;
+    border-bottom:1px solid #c3c6c9;}
+  .cover.ph{display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:12px;color:#888;}
+  .meta{padding:7px 9px;}
+  .ttl{font-size:13px;line-height:1.35;font-weight:bold;color:var(--ink);
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+  .yr{font-family:var(--mono);font-size:11px;color:var(--sub);margin-top:4px;}
+  .center{padding:24px;text-align:center;font-family:var(--mono);font-size:13px;color:#444;}
+  .more{display:block;margin:6px auto 30px;font-family:var(--face);font-size:14px;
+    font-weight:bold;color:#3a3a3a;padding:9px 26px;border:1px solid #a9acb0;
+    border-radius:999px;cursor:pointer;position:relative;overflow:hidden;
+    background:linear-gradient(180deg,#fff 0%,#f1f2f4 48%,#e2e4e6 50%,#eef0f2 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 1px 2px rgba(0,0,0,.18);}
+  .more::before{content:"";position:absolute;left:8%;right:8%;top:1px;height:42%;
+    border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,0));}
+  .more:active{background:linear-gradient(180deg,#dfe1e3,#eef0f2);box-shadow:inset 0 1px 3px rgba(0,0,0,.22);}
+  .more:disabled{opacity:.5;}
+</style>
+</head>
+<body>
+<div class="win">
+  <div class="titlebar"><span class="dot"></span>漫画庫 — Internet Archive</div>
+  <div class="grid" id="grid"></div>
+  <div class="center" id="status">読込中…</div>
+  <button class="more" id="more" style="display:none">もっと見る</button>
+</div>
+
+<script>
+var ROWS = 20;
+var page = 1;
+var loading = false;
+var done = false;
+var seen = {};
+var grid = document.getElementById("grid");
+var statusEl = document.getElementById("status");
+var moreBtn = document.getElementById("more");
+
+function rawAPI(p){
+  var q = '(manga) AND year:[1980 TO 2010] AND mediatype:texts';
+  return 'https://archive.org/advancedsearch.php'
+    + '?q=' + encodeURIComponent(q)
+    + '&fl[]=identifier&fl[]=title&fl[]=year'
+    + '&sort[]=downloads+desc'
+    + '&rows=' + ROWS + '&page=' + p + '&output=json';
+}
+// CORS 代理：GitHub Pages 上直接抓 archive.org 会被浏览器跨域拦截，
+// 经代理转发可补上跨域许可头。两个备用，前一个失败自动换后一个。
+var PROXIES = [
+  function(u){ return 'https://corsproxy.io/?url=' + encodeURIComponent(u); },
+  function(u){ return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); }
+];
+var proxyIdx = 0;
+function apiURL(p){ return PROXIES[proxyIdx](rawAPI(p)); }
+
+function imgURL(id){ return 'https://archive.org/services/img/' + id; }
+function detailURL(id){ return 'https://archive.org/details/' + id; }
+
+function addCard(doc){
+  if(!doc.identifier || seen[doc.identifier]) return;
+  seen[doc.identifier] = 1;
+  var card = document.createElement("div");
+  card.className = "card";
+  var title = doc.title || doc.identifier;
+  if(Array.isArray(title)) title = title[0];
+  var year = doc.year || "";
+  card.innerHTML =
+    '<img class="cover" loading="lazy" src="' + imgURL(doc.identifier) + '" '
+    + 'onerror="this.classList.add(\'ph\');this.removeAttribute(\'src\');this.textContent=\'No Cover\';">'
+    + '<div class="meta"><div class="ttl"></div>'
+    + (year ? '<div class="yr">' + year + '</div>' : '')
+    + '</div>';
+  card.querySelector(".ttl").textContent = title;
+  card.addEventListener("click", function(){
+    window.open(detailURL(doc.identifier), "_blank");
+  });
+  grid.appendChild(card);
+}
+
+function load(){
+  if(loading || done) return;
+  loading = true;
+  moreBtn.disabled = true;
+  statusEl.style.display = "";
+  statusEl.textContent = "読込中…";
+  fetch(apiURL(page))
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var docs = (data.response && data.response.docs) || [];
+      if(docs.length === 0){
+        done = true;
+        statusEl.textContent = page === 1 ? "何も見つかりませんでした" : "— おわり —";
+        moreBtn.style.display = "none";
+        loading = false;
+        return;
+      }
+      docs.forEach(addCard);
+      page++;
+      statusEl.style.display = "none";
+      moreBtn.style.display = "";
+      moreBtn.disabled = false;
+      loading = false;
+    })
+    .catch(function(e){
+      // 当前代理失败，自动换下一个再试一次
+      if(proxyIdx < PROXIES.length - 1){
+        proxyIdx++;
+        loading = false;
+        load();
+        return;
+      }
+      statusEl.textContent = "読込失敗（ネット確認してね）";
+      moreBtn.disabled = false;
+      loading = false;
+    });
+}
+
+moreBtn.addEventListener("click", load);
+load();
+</script>
+</body>
+</html>
