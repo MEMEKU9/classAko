@@ -2,7 +2,12 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="N2漢字">
+<meta name="theme-color" content="#54565a">
 <title>N2 漢字読み</title>
 <style>
   :root{
@@ -22,7 +27,7 @@
   /* 标题栏：灰色金属渐变 + 顶部高光，Aqua 风但无蓝 */
   .titlebar{background:linear-gradient(180deg,var(--bar-top) 0%,#54565a 48%,var(--bar-bot) 100%);
     color:#fff;font-family:var(--mono);font-weight:bold;
-    font-size:15px;padding:7px 11px;display:flex;align-items:center;gap:8px;
+    font-size:15px;padding:7px 11px;padding-top:calc(7px + env(safe-area-inset-top));display:flex;align-items:center;gap:8px;
     position:sticky;top:0;z-index:5;text-shadow:0 1px 1px rgba(0,0,0,.45);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -1px 0 rgba(0,0,0,.3);}
   .titlebar .dot{width:13px;height:13px;border-radius:50%;
@@ -30,7 +35,7 @@
     box-shadow:inset 0 1px 1px rgba(255,255,255,.8),0 1px 1px rgba(0,0,0,.35);}
 
   .bar{padding:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;
-    position:sticky;top:32px;z-index:4;margin-top:-1px;
+    position:sticky;top:calc(32px + env(safe-area-inset-top));z-index:4;margin-top:-1px;
     background:rgba(245,246,248,.08);
     border-top:1px solid rgba(255,255,255,.6);
     border-bottom:1px solid rgba(150,150,150,.22);
