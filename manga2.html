@@ -77,9 +77,12 @@
   .resume input{width:100%;font-family:var(--mono);font-size:11px;padding:5px 6px;
     border:1px solid #9a9da1;border-radius:5px;box-shadow:inset 0 1px 2px rgba(0,0,0,.15);
     background:#fff;}
+  .resume .row{display:flex;gap:6px;align-items:center;justify-content:space-between;}
+  .resume .saved{font-family:var(--mono);font-size:10px;color:#2f7a2f;opacity:0;transition:opacity .2s;}
+  .resume .saved.on{opacity:1;}
   .resume .go{position:relative;overflow:hidden;font-family:var(--face);font-size:12px;
     font-weight:bold;color:#3a3a3a;padding:5px 14px;border:1px solid #a9acb0;border-radius:999px;
-    cursor:pointer;align-self:flex-end;
+    cursor:pointer;white-space:nowrap;
     background:linear-gradient(180deg,#fff 0%,#f1f2f4 48%,#e2e4e6 50%,#eef0f2 100%);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 1px 2px rgba(0,0,0,.18);}
   .resume .go::before{content:"";position:absolute;left:8%;right:8%;top:1px;height:42%;
@@ -274,8 +277,8 @@ function renderHist(){
   HIST.forEach(function(it){
     var card = document.createElement("div");
     card.className = "card";
-    // 旧的脏数据（http 长网址）不回显，只回显纯数字页码
-    var shownVal = /^\d+$/.test(it.url) ? it.url : "";
+    // 回显上次存的续读网址（之前漏掉了这一步）
+    var shownVal = (it.url || "").replace(/"/g, "&quot;");
     card.innerHTML =
       '<img class="cover" loading="lazy" src="' + imgURL(it.id) + '" '
       + 'onerror="this.classList.add(\'ph\');this.removeAttribute(\'src\');this.textContent=\'No Cover\';">'
@@ -283,32 +286,39 @@ function renderHist(){
       + (it.year ? '<div class="yr">' + it.year + '</div>' : '')
       + '</div>'
       + '<div class="resume">'
-      + '<input type="text" inputmode="numeric" value="' + shownVal + '" placeholder="ページ番号(半角) 例:20">'
-      + '<button class="go">読む</button>'
+      + '<input type="text" inputmode="url" value="' + shownVal + '" placeholder="今の画像URLを貼り付け">'
+      + '<div class="row"><span class="saved">✓ 保存</span><button class="go">続きを読む</button></div>'
       + '</div>';
     card.querySelector(".ttl").textContent = it.title || it.id;
     var input = card.querySelector(".resume input");
     var goBtn = card.querySelector(".resume .go");
-    // 点封面/标题 = 从头看；点「読む」= 跳到填的页码
+    var savedTag = card.querySelector(".resume .saved");
+    // 点封面/标题 = 从头看
     card.querySelector(".cover").addEventListener("click", function(){
       pushHist(it);
       window.open(detailURL(it.id), "_blank");
     });
     input.addEventListener("click", function(e){ e.stopPropagation(); });
+    // 失焦自动保存：粘进去点框外就存，随时覆盖旧的
+    input.addEventListener("blur", function(){
+      var v = input.value.trim();
+      setHistURL(it.id, v);
+      it.url = v;
+      if(savedTag){ savedTag.classList.add("on");
+        setTimeout(function(){ savedTag.classList.remove("on"); }, 1500); }
+    });
+    // 点「続きを読む」= 先存再打开存的网址
     goBtn.addEventListener("click", function(e){
       e.stopPropagation();
-      var v = toHankaku(input.value.trim());   // 全角→半角
+      var v = input.value.trim();
       setHistURL(it.id, v);
+      it.url = v;
       pushHist(it);
-      var target;
-      if(/^\d+$/.test(v)){
-        target = pageURL(it.id, parseInt(v, 10));   // 纯数字 = 页码
-      } else if(/^https?:\/\//i.test(v)){
-        target = v;                                  // 也兼容粘完整 URL
+      if(/^https?:\/\//i.test(v)){
+        window.open(v, "_blank");                   // 打开存的续读网址
       } else {
-        target = detailURL(it.id);                   // 没填就从头开
+        window.open(detailURL(it.id), "_blank");    // 没存就从头开
       }
-      window.open(target, "_blank");
     });
     grid.appendChild(card);
   });
