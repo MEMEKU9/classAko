@@ -72,15 +72,14 @@
     border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,0));}
   .more:active{background:linear-gradient(180deg,#dfe1e3,#eef0f2);box-shadow:inset 0 1px 3px rgba(0,0,0,.22);}
   .more:disabled{opacity:.5;}
-  /* 历史卡片底部的页码续读条 */
-  .resume{display:flex;align-items:center;gap:5px;padding:6px 9px 8px;border-top:1px solid #e0e2e4;}
-  .resume input{width:48px;font-family:var(--mono);font-size:12px;padding:4px 5px;
+  /* 历史卡片底部的续读栏（粘贴URL） */
+  .resume{display:flex;flex-direction:column;gap:5px;padding:6px 9px 8px;border-top:1px solid #e0e2e4;}
+  .resume input{width:100%;font-family:var(--mono);font-size:11px;padding:5px 6px;
     border:1px solid #9a9da1;border-radius:5px;box-shadow:inset 0 1px 2px rgba(0,0,0,.15);
-    background:#fff;text-align:center;}
-  .resume .lbl{font-family:var(--mono);font-size:11px;color:var(--sub);}
+    background:#fff;}
   .resume .go{position:relative;overflow:hidden;font-family:var(--face);font-size:12px;
     font-weight:bold;color:#3a3a3a;padding:5px 14px;border:1px solid #a9acb0;border-radius:999px;
-    cursor:pointer;margin-left:auto;
+    cursor:pointer;align-self:flex-end;
     background:linear-gradient(180deg,#fff 0%,#f1f2f4 48%,#e2e4e6 50%,#eef0f2 100%);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 1px 2px rgba(0,0,0,.18);}
   .resume .go::before{content:"";position:absolute;left:8%;right:8%;top:1px;height:42%;
@@ -158,8 +157,8 @@ function saveHist(){
 function pushHist(item){
   for(var i=0;i<HIST.length;i++){
     if(HIST[i].id === item.id){
-      // 已存在：保留已记录的页码，挪到最前
-      if(HIST[i].pg && !item.pg){ item.pg = HIST[i].pg; }
+      // 已存在：保留已记录的续读网址，挪到最前
+      if(HIST[i].url && !item.url){ item.url = HIST[i].url; }
       HIST.splice(i,1);
       break;
     }
@@ -167,9 +166,9 @@ function pushHist(item){
   HIST.unshift(item);
   saveHist();
 }
-function setHistPage(id, pg){
+function setHistURL(id, url){
   for(var i=0;i<HIST.length;i++){
-    if(HIST[i].id === id){ HIST[i].pg = pg; saveHist(); return; }
+    if(HIST[i].id === id){ HIST[i].url = url; saveHist(); return; }
   }
 }
 loadHist();
@@ -275,26 +274,30 @@ function renderHist(){
       + (it.year ? '<div class="yr">' + it.year + '</div>' : '')
       + '</div>'
       + '<div class="resume">'
-      + '<span class="lbl">P</span>'
-      + '<input type="number" min="1" inputmode="numeric" value="' + (it.pg || "") + '" placeholder="?">'
+      + '<input type="text" inputmode="url" value="' + (it.url || "") + '" placeholder="貼り付け：続きのURL">'
       + '<button class="go">読む</button>'
       + '</div>';
     card.querySelector(".ttl").textContent = it.title || it.id;
     var input = card.querySelector(".resume input");
     var goBtn = card.querySelector(".resume .go");
-    // 点封面/标题 = 从头看；点「読む」= 跳到填写的页码
+    // 点封面/标题 = 从头看；点「読む」= 打开存的续读网址
     card.querySelector(".cover").addEventListener("click", function(){
       pushHist(it);
       window.open(detailURL(it.id), "_blank");
     });
-    // 阻止点输入框时误触发卡片
     input.addEventListener("click", function(e){ e.stopPropagation(); });
     goBtn.addEventListener("click", function(e){
       e.stopPropagation();
-      var pg = parseInt(input.value, 10);
-      if(pg && pg > 0){ setHistPage(it.id, pg); }
-      pushHist(it);
-      window.open(pageURL(it.id, pg), "_blank");
+      var url = input.value.trim();
+      if(url){
+        setHistURL(it.id, url);
+        pushHist(it);
+        window.open(url, "_blank");
+      } else {
+        // 没存网址就从头打开
+        pushHist(it);
+        window.open(detailURL(it.id), "_blank");
+      }
     });
     grid.appendChild(card);
   });
