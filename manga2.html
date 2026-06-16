@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="漫画庫">
+<meta name="theme-color" content="#54565a">
+<title>漫画庫 — IA Manga</title>
+<style>
+  :root{
+    --silver:#d6d8da; --silver-d:#9a9da1; --silver-l:#ffffff;
+    --bar-top:#6a6d72; --bar-bot:#3d3f43;
+    --paper:#ffffff; --ink:#1a1a1a; --sub:#5b5e63;
+    --face:"Hiragino Sans","Noto Sans CJK JP","Microsoft YaHei",sans-serif;
+    --mono:"Courier New",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:#7d8488;font-family:var(--face);color:var(--ink);}
+  .win{max-width:680px;margin:0 auto;min-height:100vh;background:var(--silver);
+    border-left:2px solid var(--silver-l);border-top:2px solid var(--silver-l);
+    border-right:2px solid var(--silver-d);border-bottom:2px solid var(--silver-d);}
+  .titlebar{background:linear-gradient(180deg,var(--bar-top) 0%,#54565a 48%,var(--bar-bot) 100%);
+    color:#fff;font-family:var(--mono);font-weight:bold;font-size:15px;
+    padding:7px 11px;padding-top:calc(7px + env(safe-area-inset-top));
+    display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:5;
+    text-shadow:0 1px 1px rgba(0,0,0,.45);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -1px 0 rgba(0,0,0,.3);}
+  .titlebar .dot{width:13px;height:13px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#fff 0%,#cfd2d6 40%,#8b8e92 100%);
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.8),0 1px 1px rgba(0,0,0,.35);}
+  .tabs{display:flex;gap:8px;padding:8px 10px;position:sticky;
+    top:calc(35px + env(safe-area-inset-top));z-index:4;
+    background:rgba(245,246,248,.1);
+    -webkit-backdrop-filter:blur(4px) saturate(150%);
+    backdrop-filter:blur(4px) saturate(150%);
+    border-bottom:1px solid rgba(150,150,150,.22);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.7);}
+  .tab{position:relative;font-family:var(--face);font-size:14px;font-weight:bold;
+    padding:7px 20px;cursor:pointer;color:#3a3a3a;border:1px solid #a9acb0;
+    border-radius:999px;overflow:hidden;
+    background:linear-gradient(180deg,#fff 0%,#f1f2f4 48%,#e2e4e6 50%,#eef0f2 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 1px 2px rgba(0,0,0,.18);}
+  .tab::before{content:"";position:absolute;left:8%;right:8%;top:1px;height:42%;
+    border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,0));}
+  .tab.on{color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.35);border-color:#6f7276;
+    background:linear-gradient(180deg,#9a9da1 0%,#7c7f83 48%,#5e6165 50%,#6f7276 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 1px 2px rgba(0,0,0,.25);}
+  .tab.on::before{background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0));}
+  .grid{padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .card{background:linear-gradient(180deg,#fff,#f4f5f6);border:1px solid #c3c6c9;
+    border-radius:6px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 1px 2px rgba(0,0,0,.08);}
+  .card:active{box-shadow:inset 0 1px 3px rgba(0,0,0,.2);}
+  .cover{width:100%;aspect-ratio:3/4;background:#e4e6e8;object-fit:cover;display:block;
+    border-bottom:1px solid #c3c6c9;}
+  .cover.ph{display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:12px;color:#888;}
+  .meta{padding:7px 9px;}
+  .ttl{font-size:13px;line-height:1.35;font-weight:bold;color:var(--ink);
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+  .yr{font-family:var(--mono);font-size:11px;color:var(--sub);margin-top:4px;}
+  .center{padding:24px;text-align:center;font-family:var(--mono);font-size:13px;color:#444;}
+  .more{display:block;margin:6px auto 30px;font-family:var(--face);font-size:14px;
+    font-weight:bold;color:#3a3a3a;padding:9px 26px;border:1px solid #a9acb0;
+    border-radius:999px;cursor:pointer;position:relative;overflow:hidden;
+    background:linear-gradient(180deg,#fff 0%,#f1f2f4 48%,#e2e4e6 50%,#eef0f2 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 1px 2px rgba(0,0,0,.18);}
+  .more::before{content:"";position:absolute;left:8%;right:8%;top:1px;height:42%;
+    border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,0));}
+  .more:active{background:linear-gradient(180deg,#dfe1e3,#eef0f2);box-shadow:inset 0 1px 3px rgba(0,0,0,.22);}
+  .more:disabled{opacity:.5;}
+  /* 历史卡片底部的页码续读条 */
+  .resume{display:flex;align-items:center;gap:5px;padding:6px 9px 8px;border-top:1px solid #e0e2e4;}
+  .resume input{width:48px;font-family:var(--mono);font-size:12px;padding:4px 5px;
+    border:1px solid #9a9da1;border-radius:5px;box-shadow:inset 0 1px 2px rgba(0,0,0,.15);
+    background:#fff;text-align:center;}
+  .resume .lbl{font-family:var(--mono);font-size:11px;color:var(--sub);}
+  .resume .go{position:relative;overflow:hidden;font-family:var(--face);font-size:12px;
+    font-weight:bold;color:#3a3a3a;padding:5px 14px;border:1px solid #a9acb0;border-radius:999px;
+    cursor:pointer;margin-left:auto;
+    background:linear-gradient(180deg,#fff 0%,#f1f2f4 48%,#e2e4e6 50%,#eef0f2 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 1px 2px rgba(0,0,0,.18);}
+  .resume .go::before{content:"";position:absolute;left:8%;right:8%;top:1px;height:42%;
+    border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,0));}
+  .resume .go:active{background:linear-gradient(180deg,#dfe1e3,#eef0f2);box-shadow:inset 0 1px 3px rgba(0,0,0,.22);}
+</style>
+</head>
+<body>
+<div class="win">
+  <div class="titlebar"><span class="dot"></span>漫画庫 — Internet Archive</div>
+  <div class="tabs" id="tabs">
+    <button class="tab on" data-tab="manga">漫画</button>
+    <button class="tab" data-tab="art">画集</button>
+    <button class="tab" data-tab="hist">履歴</button>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="center" id="status">読込中…</div>
+  <button class="more" id="more" style="display:none">もっと見る</button>
+</div>
+
+<script>
+var ROWS = 20;
+var page = 1;
+var loading = false;
+var done = false;
+var seen = {};
+var grid = document.getElementById("grid");
+var statusEl = document.getElementById("status");
+var moreBtn = document.getElementById("more");
+
+var curTab = "manga";
+var NOT_ADULT =
+    ' AND NOT collection:eroticabooks'
+  + ' AND NOT subject:erotic AND NOT subject:erotica'
+  + ' AND NOT subject:hentai AND NOT subject:adult'
+  + ' AND NOT subject:ecchi AND NOT subject:nsfw'
+  + ' AND NOT subject:pornography AND NOT subject:nude';
+var QUERIES = {
+  manga: '(manga) AND year:[1980 TO 2010] AND mediatype:texts' + NOT_ADULT,
+  art: '(artbook OR "art book" OR illustrations OR "art works" OR artworks OR 画集 OR 設定資料集 OR "visual book") AND year:[1980 TO 2010] AND mediatype:texts' + NOT_ADULT
+};
+function rawAPI(p){
+  var q = QUERIES[curTab];
+  return 'https://archive.org/advancedsearch.php'
+    + '?q=' + encodeURIComponent(q)
+    + '&fl[]=identifier&fl[]=title&fl[]=year'
+    + '&sort[]=downloads+desc'
+    + '&rows=' + ROWS + '&page=' + p + '&output=json';
+}
+var PROXIES = [
+  function(u){ return 'https://corsproxy.io/?url=' + encodeURIComponent(u); },
+  function(u){ return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); }
+];
+var proxyIdx = 0;
+function apiURL(p){ return PROXIES[proxyIdx](rawAPI(p)); }
+
+function imgURL(id){ return 'https://archive.org/services/img/' + id; }
+function detailURL(id){ return 'https://archive.org/details/' + id; }
+function pageURL(id, pg){
+  if(pg && pg > 0){ return 'https://archive.org/details/' + id + '/page/' + pg; }
+  return detailURL(id);
+}
+
+var HIST_KEY = "manga_hist_v1";
+var HIST = [];
+function loadHist(){
+  try{
+    var raw = localStorage.getItem(HIST_KEY);
+    if(raw){ var a = JSON.parse(raw); if(a && a.length) HIST = a; }
+  }catch(e){}
+}
+function saveHist(){
+  try{ localStorage.setItem(HIST_KEY, JSON.stringify(HIST.slice(0,200))); }catch(e){}
+}
+function pushHist(item){
+  for(var i=0;i<HIST.length;i++){
+    if(HIST[i].id === item.id){
+      // 已存在：保留已记录的页码，挪到最前
+      if(HIST[i].pg && !item.pg){ item.pg = HIST[i].pg; }
+      HIST.splice(i,1);
+      break;
+    }
+  }
+  HIST.unshift(item);
+  saveHist();
+}
+function setHistPage(id, pg){
+  for(var i=0;i<HIST.length;i++){
+    if(HIST[i].id === id){ HIST[i].pg = pg; saveHist(); return; }
+  }
+}
+loadHist();
+
+var BLOCK = ["erotic","erotica","hentai","ecchi","nsfw","adult","porn",
+  "nude","xxx","18+","seijin","ero-","r18","r-18","doujin"];
+function isBlocked(title, id){
+  var s = ((title || "") + " " + (id || "")).toLowerCase();
+  for(var i=0;i<BLOCK.length;i++){ if(s.indexOf(BLOCK[i]) >= 0) return true; }
+  return false;
+}
+
+function addCard(doc){
+  if(!doc.identifier || seen[doc.identifier]) return;
+  var title0 = doc.title || doc.identifier;
+  if(Array.isArray(title0)) title0 = title0[0];
+  if(isBlocked(title0, doc.identifier)) return;
+  seen[doc.identifier] = 1;
+  var card = document.createElement("div");
+  card.className = "card";
+  var title = title0;
+  var year = doc.year || "";
+  card.innerHTML =
+    '<img class="cover" loading="lazy" src="' + imgURL(doc.identifier) + '" '
+    + 'onerror="this.classList.add(\'ph\');this.removeAttribute(\'src\');this.textContent=\'No Cover\';">'
+    + '<div class="meta"><div class="ttl"></div>'
+    + (year ? '<div class="yr">' + year + '</div>' : '')
+    + '</div>';
+  card.querySelector(".ttl").textContent = title;
+  card.addEventListener("click", function(){
+    pushHist({id:doc.identifier, title:title0, year:doc.year || ""});
+    window.open(detailURL(doc.identifier), "_blank");
+  });
+  grid.appendChild(card);
+}
+
+function load(){
+  if(loading || done) return;
+  loading = true;
+  moreBtn.disabled = true;
+  statusEl.style.display = "";
+  statusEl.textContent = "読込中…";
+  fetch(apiURL(page))
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var docs = (data.response && data.response.docs) || [];
+      if(docs.length === 0){
+        done = true;
+        statusEl.textContent = page === 1 ? "何も見つかりませんでした" : "— おわり —";
+        moreBtn.style.display = "none";
+        loading = false;
+        return;
+      }
+      docs.forEach(addCard);
+      page++;
+      statusEl.style.display = "none";
+      moreBtn.style.display = "";
+      moreBtn.disabled = false;
+      loading = false;
+    })
+    .catch(function(e){
+      if(proxyIdx < PROXIES.length - 1){
+        proxyIdx++;
+        loading = false;
+        load();
+        return;
+      }
+      statusEl.textContent = "読込失敗（ネット確認してね）";
+      moreBtn.disabled = false;
+      loading = false;
+    });
+}
+
+moreBtn.addEventListener("click", load);
+
+var tabBtns = document.querySelectorAll(".tab");
+function switchTab(name){
+  if(name === curTab) return;
+  curTab = name;
+  for(var i=0;i<tabBtns.length;i++){
+    tabBtns[i].classList.toggle("on", tabBtns[i].getAttribute("data-tab") === name);
+  }
+  page = 1; loading = false; done = false; seen = {}; proxyIdx = 0;
+  grid.innerHTML = "";
+  moreBtn.style.display = "none";
+  if(name === "hist"){ renderHist(); } else { load(); }
+}
+
+function renderHist(){
+  statusEl.style.display = "none";
+  if(HIST.length === 0){
+    statusEl.style.display = "";
+    statusEl.textContent = "まだ履歴がありません";
+    return;
+  }
+  HIST.forEach(function(it){
+    var card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML =
+      '<img class="cover" loading="lazy" src="' + imgURL(it.id) + '" '
+      + 'onerror="this.classList.add(\'ph\');this.removeAttribute(\'src\');this.textContent=\'No Cover\';">'
+      + '<div class="meta"><div class="ttl"></div>'
+      + (it.year ? '<div class="yr">' + it.year + '</div>' : '')
+      + '</div>'
+      + '<div class="resume">'
+      + '<span class="lbl">P</span>'
+      + '<input type="number" min="1" inputmode="numeric" value="' + (it.pg || "") + '" placeholder="?">'
+      + '<button class="go">読む</button>'
+      + '</div>';
+    card.querySelector(".ttl").textContent = it.title || it.id;
+    var input = card.querySelector(".resume input");
+    var goBtn = card.querySelector(".resume .go");
+    // 点封面/标题 = 从头看；点「読む」= 跳到填写的页码
+    card.querySelector(".cover").addEventListener("click", function(){
+      pushHist(it);
+      window.open(detailURL(it.id), "_blank");
+    });
+    // 阻止点输入框时误触发卡片
+    input.addEventListener("click", function(e){ e.stopPropagation(); });
+    goBtn.addEventListener("click", function(e){
+      e.stopPropagation();
+      var pg = parseInt(input.value, 10);
+      if(pg && pg > 0){ setHistPage(it.id, pg); }
+      pushHist(it);
+      window.open(pageURL(it.id, pg), "_blank");
+    });
+    grid.appendChild(card);
+  });
+  var clr = document.createElement("button");
+  clr.className = "more"; clr.textContent = "履歴をクリア";
+  clr.style.gridColumn = "1 / -1";
+  clr.addEventListener("click", function(){
+    HIST = []; saveHist(); grid.innerHTML = "";
+    statusEl.style.display = ""; statusEl.textContent = "まだ履歴がありません";
+  });
+  grid.appendChild(clr);
+}
+for(var t=0;t<tabBtns.length;t++){
+  tabBtns[t].addEventListener("click", function(){
+    switchTab(this.getAttribute("data-tab"));
+  });
+}
+
+load();
+</script>
+</body>
+</html>
