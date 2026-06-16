@@ -72,7 +72,7 @@
     border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,0));}
   .more:active{background:linear-gradient(180deg,#dfe1e3,#eef0f2);box-shadow:inset 0 1px 3px rgba(0,0,0,.22);}
   .more:disabled{opacity:.5;}
-  /* 历史卡片底部的续读栏（粘贴URL） */
+  /* 历史卡片底部的续读栏（填页码数字，或粘 URL） */
   .resume{display:flex;flex-direction:column;gap:5px;padding:6px 9px 8px;border-top:1px solid #e0e2e4;}
   .resume input{width:100%;font-family:var(--mono);font-size:11px;padding:5px 6px;
     border:1px solid #9a9da1;border-radius:5px;box-shadow:inset 0 1px 2px rgba(0,0,0,.15);
@@ -138,8 +138,9 @@ function apiURL(p){ return PROXIES[proxyIdx](rawAPI(p)); }
 
 function imgURL(id){ return 'https://archive.org/services/img/' + id; }
 function detailURL(id){ return 'https://archive.org/details/' + id; }
-function pageURL(id, pg){
-  if(pg && pg > 0){ return 'https://archive.org/details/' + id + '/page/' + pg; }
+// IA 验证过能定位的跳页格式：/page/n数字/mode/2up
+function pageURL(id, n){
+  if(n && n > 0){ return 'https://archive.org/details/' + id + '/page/n' + n + '/mode/2up'; }
   return detailURL(id);
 }
 
@@ -157,7 +158,7 @@ function saveHist(){
 function pushHist(item){
   for(var i=0;i<HIST.length;i++){
     if(HIST[i].id === item.id){
-      // 已存在：保留已记录的续读网址，挪到最前
+      // 已存在：保留已记录的续读位置，挪到最前
       if(HIST[i].url && !item.url){ item.url = HIST[i].url; }
       HIST.splice(i,1);
       break;
@@ -274,13 +275,13 @@ function renderHist(){
       + (it.year ? '<div class="yr">' + it.year + '</div>' : '')
       + '</div>'
       + '<div class="resume">'
-      + '<input type="text" inputmode="url" value="' + (it.url || "") + '" placeholder="貼り付け：続きのURL">'
+      + '<input type="text" inputmode="numeric" value="' + (it.url || "") + '" placeholder="ページ番号 例:20">'
       + '<button class="go">読む</button>'
       + '</div>';
     card.querySelector(".ttl").textContent = it.title || it.id;
     var input = card.querySelector(".resume input");
     var goBtn = card.querySelector(".resume .go");
-    // 点封面/标题 = 从头看；点「読む」= 打开存的续读网址
+    // 点封面/标题 = 从头看；点「読む」= 跳到填的页码
     card.querySelector(".cover").addEventListener("click", function(){
       pushHist(it);
       window.open(detailURL(it.id), "_blank");
@@ -288,16 +289,21 @@ function renderHist(){
     input.addEventListener("click", function(e){ e.stopPropagation(); });
     goBtn.addEventListener("click", function(e){
       e.stopPropagation();
-      var url = input.value.trim();
-      if(url){
-        setHistURL(it.id, url);
-        pushHist(it);
-        window.open(url, "_blank");
+      var v = input.value.trim();
+      setHistURL(it.id, v);
+      pushHist(it);
+      var target;
+      if(/^\d+$/.test(v)){
+        // 纯数字 = 页码，自动拼 IA 跳页链接
+        target = pageURL(it.id, parseInt(v, 10));
+      } else if(/^https?:\/\//i.test(v)){
+        // 也兼容直接粘完整 URL
+        target = v;
       } else {
-        // 没存网址就从头打开
-        pushHist(it);
-        window.open(detailURL(it.id), "_blank");
+        // 没填就从头开
+        target = detailURL(it.id);
       }
+      window.open(target, "_blank");
     });
     grid.appendChild(card);
   });
