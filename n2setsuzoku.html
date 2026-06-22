@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="N2文法">
+<meta name="theme-color" content="#54565a">
+<title>N2 接続形態 — memeku9.exe</title>
+<style>
+:root{
+  --silver:#d6d8da;--silver-d:#9a9da1;--silver-l:#ffffff;
+  --bar-top:#6a6d72;--bar-bot:#3d3f43;
+  --ink:#1a1a1a;--sub:#5b5e63;
+  --face:"Hiragino Sans","Noto Sans CJK JP","Microsoft YaHei",sans-serif;
+  --mono:"Courier New",ui-monospace,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:#7d8488;font-family:var(--face);color:var(--ink);}
+.win{max-width:680px;margin:0 auto;min-height:100vh;background:var(--silver);
+  border-left:2px solid var(--silver-l);border-top:2px solid var(--silver-l);
+  border-right:2px solid var(--silver-d);border-bottom:2px solid var(--silver-d);}
+.titlebar{background:linear-gradient(180deg,var(--bar-top) 0%,#54565a 48%,var(--bar-bot) 100%);
+  color:#fff;font-family:var(--mono);font-weight:bold;font-size:15px;
+  padding:7px 11px;padding-top:calc(7px + env(safe-area-inset-top));
+  display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:10;
+  text-shadow:0 1px 1px rgba(0,0,0,.45);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -1px 0 rgba(0,0,0,.3);}
+.titlebar .dot{width:13px;height:13px;border-radius:50%;flex-shrink:0;
+  background:radial-gradient(circle at 35% 30%,#fff 0%,#cfd2d6 40%,#8b8e92 100%);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.8),0 1px 1px rgba(0,0,0,.35);}
+/* TABS */
+.tabs{display:flex;overflow-x:auto;gap:3px;padding:7px 8px 0;
+  background:linear-gradient(180deg,#c8cacc,#b8bbbe);
+  border-bottom:2px solid var(--silver-d);
+  position:sticky;top:calc(34px + env(safe-area-inset-top));z-index:9;
+  scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex-shrink:0;font-family:var(--face);font-size:12px;font-weight:bold;
+  padding:5px 11px;cursor:pointer;color:#444;
+  border:1px solid #a9acb0;border-bottom:none;border-radius:5px 5px 0 0;
+  background:linear-gradient(180deg,#e8eaec,#d4d6d8);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7);white-space:nowrap;}
+.tab.on{color:#1a1a1a;background:var(--silver);border-color:#8a8d90;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 -1px 3px rgba(0,0,0,.06);
+  position:relative;z-index:2;}
+/* TOOLBAR */
+.bar{padding:7px 8px;display:flex;flex-wrap:wrap;gap:7px;align-items:center;
+  background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(200,202,204,.08));
+  border-bottom:1px solid rgba(150,150,150,.22);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 1px 4px rgba(0,0,0,.04);}
+.btn{position:relative;font-family:var(--face);font-size:13px;font-weight:bold;
+  padding:5px 14px;cursor:pointer;color:#3a3a3a;
+  border:1px solid #a9acb0;border-radius:999px;
+  background:linear-gradient(180deg,#fff 0%,#f1f2f4 48%,#e2e4e6 50%,#eef0f2 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 1px 2px rgba(0,0,0,.18);
+  overflow:hidden;}
+.btn::before{content:"";position:absolute;left:8%;right:8%;top:1px;height:42%;
+  border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,0));
+  pointer-events:none;}
+.btn:active{background:linear-gradient(180deg,#dfe1e3,#eef0f2);box-shadow:inset 0 1px 3px rgba(0,0,0,.22);}
+.btn.on{color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.35);border-color:#6f7276;
+  background:linear-gradient(180deg,#9a9da1 0%,#7c7f83 48%,#5e6165 50%,#6f7276 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 1px 2px rgba(0,0,0,.25);}
+.btn.on::before{background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0));}
+/* SHEET */
+.sheet{padding:10px 10px 48px;}
+.cat-label{font-family:var(--mono);font-weight:bold;font-size:13px;
+  color:#3d3f43;background:linear-gradient(180deg,#eceef0,#d9dbde);
+  padding:5px 10px;border-radius:4px;margin:14px 0 5px;
+  border-bottom:1px solid var(--silver-d);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7);}
+.cat-desc{font-size:12px;color:#555;padding:4px 10px 8px;line-height:1.5;
+  background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(240,241,243,.5));
+  border-left:3px solid #b0b3b7;border-radius:0 4px 4px 0;margin-bottom:6px;}
+.gcard{background:linear-gradient(180deg,#fff,#f4f5f6);
+  margin:6px 0;border:1px solid #c3c6c9;border-radius:7px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 1px 2px rgba(0,0,0,.07);
+  overflow:hidden;cursor:pointer;}
+.gcard-head{display:flex;align-items:center;gap:10px;padding:11px 14px;}
+.gcard-form{font-size:19px;font-weight:700;letter-spacing:.5px;color:#1a1a1a;flex:1;}
+.gcard-mean{font-size:13px;color:#3d5a80;font-weight:bold;text-align:right;min-width:80px;}
+.gcard-ex{display:none;padding:0 14px 11px;border-top:1px solid #dcdfe2;
+  background:linear-gradient(180deg,#f7f8f9,#f1f2f4);}
+.gcard-ex .ja{font-size:14px;color:#1a1a1a;margin-top:8px;line-height:1.6;}
+.gcard-ex .zh{font-size:12px;color:#5b5e63;margin-top:4px;line-height:1.5;}
+.gcard-ex .conn{display:inline-block;background:#e8eaec;border:1px solid #c3c6c9;
+  border-radius:3px;font-size:11px;font-family:var(--mono);
+  padding:1px 6px;margin-bottom:6px;color:#444;}
+.gcard.open .gcard-ex{display:block;}
+.gcard.open .gcard-head{border-bottom:1px solid #dcdfe2;}
+.gcard-head::after{content:"▶";font-size:10px;color:#aaa;transition:transform .15s;}
+.gcard.open .gcard-head::after{transform:rotate(90deg);}
+/* GRAMMAR QUIZ */
+.quiz{display:none;padding:12px 10px 48px;}
+.quiz.active{display:block;}
+.qscore{font-family:var(--mono);font-size:12px;color:#3d3f43;margin-bottom:8px;}
+.qbox{background:linear-gradient(180deg,#fff,#eef0f1);border:1px solid #c3c6c9;
+  border-radius:8px;padding:16px 14px;text-align:center;margin-bottom:12px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 1px 3px rgba(0,0,0,.08);}
+.qform{font-size:26px;font-weight:700;letter-spacing:.5px;}
+.qmean{font-size:13px;color:#5b5e63;margin-top:5px;}
+.opt{display:block;width:100%;text-align:left;font-size:15px;font-family:var(--face);
+  padding:12px 16px;margin:7px 0;color:#1a1a1a;cursor:pointer;
+  border:1px solid #c3c6c9;border-radius:7px;
+  background:linear-gradient(180deg,#fff 0%,#f2f3f4 55%,#e7e8ea 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 1px 2px rgba(0,0,0,.08);}
+.opt:active{background:linear-gradient(180deg,#e2e3e5,#eef0f1);box-shadow:inset 0 1px 3px rgba(0,0,0,.2);}
+.opt.right{color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.3);border-color:#1c7a44;
+  background:linear-gradient(180deg,#36a55f,#1f8a4c);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 1px 2px rgba(0,0,0,.2);}
+.opt.wrong{color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.3);border-color:#8f2424;
+  background:linear-gradient(180deg,#c44141,#a82c2c);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 1px 2px rgba(0,0,0,.2);}
+.opt.locked{pointer-events:none;}
+/* SORT QUIZ */
+.sortquiz{display:none;padding:12px 10px 48px;}
+.sortquiz.active{display:block;}
+.sq-header{font-family:var(--mono);font-size:12px;color:#3d3f43;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+.sq-stem{background:linear-gradient(180deg,#fff,#f4f5f7);border:1px solid #c3c6c9;
+  border-radius:8px;padding:14px 14px;font-size:14px;line-height:1.8;
+  color:#1a1a1a;margin-bottom:10px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 1px 3px rgba(0,0,0,.07);}
+.sq-stem .year{font-family:var(--mono);font-size:11px;color:#888;display:block;margin-bottom:4px;}
+.sq-slots{display:flex;gap:6px;flex-wrap:wrap;min-height:44px;
+  background:linear-gradient(180deg,#eaebee,#dfe0e3);
+  border:1px solid #c3c6c9;border-radius:7px;padding:8px;margin-bottom:8px;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.08);}
+.slot-item{font-size:14px;padding:6px 11px;border-radius:5px;cursor:pointer;
+  border:1px solid #4a8fc4;color:#fff;
+  background:linear-gradient(180deg,#5fa0d0,#2d6ea0);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 1px 2px rgba(0,0,0,.2);}
+.slot-item:active{opacity:.75;}
+.sq-opts{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.sq-opt{font-size:14px;padding:7px 13px;border-radius:5px;cursor:pointer;
+  border:1px solid #a9acb0;color:#1a1a1a;
+  background:linear-gradient(180deg,#fff,#e8eaec);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 1px 2px rgba(0,0,0,.1);}
+.sq-opt:active{background:linear-gradient(180deg,#dfe1e3,#eef0f1);}
+.sq-opt.used{opacity:.3;pointer-events:none;}
+.sq-actions{display:flex;gap:8px;margin-bottom:10px;}
+.sq-result{display:none;margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid #c3c6c9;}
+.sq-result.show{display:block;}
+.sq-result-head{padding:10px 14px;font-weight:bold;font-size:14px;}
+.sq-result-head.ok{background:linear-gradient(180deg,#36a55f,#1f8a4c);color:#fff;}
+.sq-result-head.ng{background:linear-gradient(180deg,#c44141,#a82c2c);color:#fff;}
+.sq-correct{padding:10px 14px;font-size:13px;background:linear-gradient(180deg,#f0f8f3,#e5f2ea);
+  border-top:1px solid #c3d8ca;color:#1a4a28;line-height:1.7;}
+.sq-grammar{padding:10px 14px;background:linear-gradient(180deg,#f7f8f9,#eef0f2);
+  border-top:1px solid #dcdfe2;}
+.sq-grammar-title{font-family:var(--mono);font-size:11px;color:#888;margin-bottom:6px;}
+.sq-rule{font-size:12px;color:#2a3a50;margin:5px 0;padding:5px 10px;
+  background:linear-gradient(180deg,#e8f0f8,#dce8f5);
+  border-left:3px solid #4a8fc4;border-radius:0 4px 4px 0;line-height:1.5;}
+.sq-rule-link{display:inline-block;margin-top:4px;font-size:11px;font-family:var(--mono);
+  color:#1e5a8a;cursor:pointer;text-decoration:underline;}
+.sq-next{margin-top:10px;}
+.hint{font-family:var(--mono);font-size:11px;color:#555;padding:7px 10px;
+  background:linear-gradient(180deg,#dcdee0,#cdd0d3);border-top:1px solid var(--silver-d);}
+.empty{padding:28px;text-align:center;font-family:var(--mono);color:#444;font-size:13px;}
+.badge{display:inline-block;font-size:10px;font-family:var(--mono);
+  padding:1px 6px;border-radius:3px;margin-left:6px;vertical-align:middle;
+  background:#e0e2e5;border:1px solid #b0b3b7;color:#444;}
+</style>
+</head>
+<body>
+<div class="win">
+<div class="titlebar"><span class="dot"></span><span>N2 接続形態 — memeku9.exe</span></div>
+<div class="tabs" id="tabs"></div>
+<div class="bar" id="toolbar"></div>
+<div class="sheet" id="sheet"></div>
+<div class="quiz" id="quiz"></div>
+<div class="sortquiz" id="sortquiz"></div>
+<div class="hint" id="hint">タップで例文展開 · 接続テスト / 並べ替えで練習</div>
+</div>
+<script>
+var QDATA = [
+{"id":"q1","year":"2025.12 Q43","stem":"ちょっと＿＿＿＿★＿＿好みのTシャツを見つけてしまい、つい買ってしまった。","opts":["だけの", "つもりで", "服屋に入ったら", "見る"],"answer":[3, 0, 1, 2],"correct":"見るだけのつもりで★服屋に入ったら","grammar":[{"rule":"「だけ」接续价：动词辞書形＋だけ，不能拆开","catId":"jisho"},{"rule":"「だけのつもりで」固定搭配：原本只打算……","catId":"jisho"}]},
+{"id":"q2","year":"2025.12 Q44","stem":"そんなに＿＿★＿＿。","opts":["痛い", "早く行けばいい", "のに", "んだったら"],"answer":[0, 3, 1, 2],"correct":"痛いんだったら★早く行けばいい のに","grammar":[{"rule":"「んだったら」前接普通形（痛い）完整命题","catId":"futsuu"},{"rule":"「ばいい＋のに」固定焊死：惋惜建议句","catId":"futsuu"}]},
+{"id":"q3","year":"2025.12 Q46","stem":"親友の花子に初めて会ったとき、初対面とは思えない＿＿★＿＿。","opts":["よく覚えている", "ぐらい", "のを", "話が盛り上がった"],"answer":[1, 3, 2, 0],"correct":"ぐらい 話が盛り上がった★のを よく覚えている","grammar":[{"rule":"「の＋を」：の把完整从句名词化，を标记宾语（知覚/記憶動詞前）","catId":"futsuu"}]},
+{"id":"q4","year":"2025.7 Q43","stem":"このパン屋では、原料の＿＿＿＿★＿＿一つ一つ丁寧にパンを作っているそうだ。","opts":["こだわって", "小麦粉は", "水にまで", "もちろん"],"answer":[1, 3, 2, 0],"correct":"小麦粉は もちろん★水にまで こだわって","grammar":[{"rule":"「AはもちろんBにまで」固定搭配：A自不必说，连B都……","catId":"noun"},{"rule":"「にまで」程度极限延伸，接名词","catId":"noun"}]},
+{"id":"q5","year":"2025.7 Q44","stem":"昨日は、梅雨の＿＿＿＿★＿＿、久しぶりに洗濯物を外に干すことができた。","opts":["いい天気で", "時期にしては", "この", "珍しく"],"answer":[2, 1, 3, 0],"correct":"この 時期にしては★珍しく いい天気で","grammar":[{"rule":"「にしては」接名词后：以……来说（却出乎意料）","catId":"noun"}]},
+{"id":"q6","year":"2025.7 Q45","stem":"今回のセミナーの開催日が人の＿＿＿＿★＿＿参加者が集まったのは大成功といえる。","opts":["集まりにくい", "ことを考えると", "平日だった", "200名もの"],"answer":[0, 2, 1, 3],"correct":"集まりにくい 平日だった★ことを考えると 200名もの","grammar":[{"rule":"「にくい」接动词ます形：集まり＋にくい","catId":"masu"},{"rule":"「ことを考えると」前接完整从句（普通形）","catId":"futsuu"}]},
+{"id":"q7","year":"2025.7 Q46","stem":"人には＿＿＿＿★＿＿気づくのは難しい。","opts":["良さがあるというが", "誰にでも", "その人にしかない", "自分でそれに"],"answer":[1, 2, 0, 3],"correct":"誰にでも その人にしかない★良さがあるというが 自分でそれに","grammar":[{"rule":"「にしかない」固定：只有……才有（接名词＋にしか＋否定）","catId":"noun"},{"rule":"「というが」前接普通形：据说……但是","catId":"futsuu"}]},
+{"id":"q8","year":"2025.7 Q47","stem":"それでも＿＿＿＿★＿＿からだ。","opts":["のは", "たまたまかかってきた", "電話に起こされた", "遅刻をせずに済んだ"],"answer":[3, 0, 1, 2],"correct":"遅刻をせずに済んだ のは★たまたまかかってきた 電話に起こされた","grammar":[{"rule":"「〜のは〜からだ」首尾呼应：のは前必须是完整从句","catId":"futsuu"}]},
+{"id":"q9","year":"2024.12 Q44","stem":"チャレンジ＿＿＿＿★＿＿？いい経験になると思うよ。","opts":["だけ", "みたら", "する", "して"],"answer":[2, 0, 3, 1],"correct":"する だけ★して みたら","grammar":[{"rule":"「だけ」接续价：動詞辞書形（する）＋だけ","catId":"jisho"},{"rule":"「Vてみたら」建议句型：して（て形）＋みたら","catId":"te"}]},
+{"id":"q10","year":"2024.12 Q45","stem":"このドレスを替ると、＿＿＿＿★＿＿気分になる。","opts":["映画か何かに", "なったような", "出てくる", "お姫様にも"],"answer":[0, 2, 3, 1],"correct":"映画か何かに 出てくる★お姫様にも なったような","grammar":[{"rule":"连体修饰：動詞辞書形（出てくる）直接修饰后面名词（お姫様）","catId":"jisho"}]},
+{"id":"q11","year":"2024.12 Q47","stem":"学生時代は、周りの人から＿＿＿＿★＿＿無理して人に合わせようとすることが多かった。","opts":["言えずに", "気にするあまり", "自分の本当の気持ちを", "自分がどう思われているかを"],"answer":[3, 1, 2, 0],"correct":"自分がどう思われているかを 気にするあまり★自分の本当の気持ちを 言えずに","grammar":[{"rule":"「あまり」前接完整从句（普通形）：过度……导致负面结果","catId":"futsuu"}]},
+{"id":"q12","year":"2024.12 Q43","stem":"古いものだし、修理に＿＿＿＿★＿＿買い替えたほうがいいかもしれない。","opts":["もう", "考えると", "かかる", "費用を"],"answer":[3, 2, 1, 0],"correct":"費用を かかる★考えると もう","grammar":[{"rule":"「Vると考えると」：と引用前面整句，考えると条件","catId":"futsuu"}]},
+{"id":"q13","year":"2024.7 Q47","stem":"会社の今井先輩は、自分はミスが多いといつも言っているが、＿＿＿＿★＿＿ように見える。","opts":["新人で", "何でも完璧にできている", "わたしからすると", "わからないことばかりの"],"answer":[0, 3, 2, 1],"correct":"新人で わからないことばかりの★わたしからすると 何でも完璧にできている","grammar":[{"rule":"「Vるばかりの＋N」：辞書形＋ばかり＋の 连体修饰名词","catId":"jisho"},{"rule":"で（連用形）连接分句≠の（連体形）修饰名词，二者不可混淆","catId":"noun"}]},
+{"id":"q14","year":"2024.7 Q43","stem":"「さわら」という魚は、漢字の「鰆」と書く＿＿★＿＿＿魚の一つだ。","opts":["ように", "わかる", "ことから", "春を代表する"],"answer":[2, 1, 0, 3],"correct":"ことから★わかる ように 春を代表する","grammar":[{"rule":"「ことから」前接完整从句（普通形）：从……可知","catId":"futsuu"}]},
+{"id":"q15","year":"2023.7 Q44","stem":"このソファーは、それなりの大きさはあるが、見た目＿＿＿＿★＿＿楽に動かせる。","opts":["ほどの", "でも", "重さはないため", "一人"],"answer":[0, 2, 3, 1],"correct":"ほどの 重さはないため★一人 でも","grammar":[{"rule":"「ほどの＋N」：ほど（程度）＋の（连体）焊在名词前","catId":"noun"},{"rule":"「一人でも」：でも前必须是名词，标记最低条件","catId":"noun"}]},
+{"id":"q16","year":"2023.7 Q43","stem":"隣のクラスの友達とけんかをしてしまい、学校の廊下で＿＿＿＿★＿＿なくなってしまった。","opts":["こと", "すら", "目を合わせる", "すれ違っても"],"answer":[3, 2, 0, 1],"correct":"すれ違っても 目を合わせる★こと すら","grammar":[{"rule":"「Vることすら〜ない」：こと把动词辞書形名词化，すら强调最低限度","catId":"jisho"},{"rule":"「〜ても」：て形＋も，即使……也","catId":"te"}]},
+{"id":"q17","year":"2023.12 Q45","stem":"大事故が＿＿＿＿★＿＿明らかになった。","opts":["起きかねない", "続いていたことが", "状態が", "危険な"],"answer":[0, 3, 2, 1],"correct":"起きかねない 危険な★状態が 続いていたことが","grammar":[{"rule":"「かねない」前接動詞ます形：起き＋かねない","catId":"masu"}]},
+{"id":"q18","year":"2023.12 Q43","stem":"この本の内容をきちんと＿＿★＿＿＿＿多いだろう。","opts":["それなりの", "理解するには", "難しいと感じる人も", "知識が求められるので"],"answer":[1, 0, 3, 2],"correct":"理解するには★それなりの 知識が求められるので 難しいと感じる人も","grammar":[{"rule":"「Vるには＋それなりの＋N」：要做到……需要相应程度的N","catId":"jisho"}]},
+{"id":"q19","year":"2022.12 Q43","stem":"そんな＿＿＿＿★＿＿＿＿きっかけだった。","opts":["ある先生との", "教師になりたいと思ったのは", "私が", "出会いが"],"answer":[2, 1, 0, 3],"correct":"私が★教師になりたいと思ったのは ある先生との 出会いが","grammar":[{"rule":"「〜のは」：のは前必须是完整从句，のは〜からだ/だった句型","catId":"futsuu"}]},
+{"id":"q20","year":"2022.12 Q44","stem":"若いときに努力して＿＿＿＿★＿＿＿＿なって必ず将来役に立つと思う。","opts":["経験は", "目標を", "自信と", "達成した"],"answer":[1, 3, 0, 2],"correct":"目標を 達成した★経験は 自信と","grammar":[{"rule":"「Vた＋N」连体修饰：達成した（た形）直接修饰経験","catId":"ta"}]},
+{"id":"q21","year":"2022.12 Q46","stem":"＿＿＿＿★＿＿＿＿酸素や栄養が十分に細胞に届かなくなってしまう。","opts":["運ばれる", "悪くなると", "血液の流れが", "血液によって"],"answer":[2, 1, 3, 0],"correct":"血液の流れが 悪くなると★血液によって 運ばれる","grammar":[{"rule":"「によって」接名词：通过……/以……方式（被动句媒介）","catId":"noun"}]},
+{"id":"q22","year":"2022.7 Q46","stem":"先日の政治家A氏の発言はあまりに無責任だ。＿＿＿＿★＿＿＿＿と思う。","opts":["政治家としての", "うえで", "発言しなければならなかった", "自分の立場をよく考えた"],"answer":[0, 3, 1, 2],"correct":"政治家としての 自分の立場をよく考えた★うえで 発言しなければならなかった","grammar":[{"rule":"「Vたうえで」：た形完整从句＋うえで，在……之后再……","catId":"ta"},{"rule":"「として」接名词：作为……（としての连体形）","catId":"noun"}]},
+{"id":"q23","year":"2022.7 Q45","stem":"大勢の前で話すのは＿＿＿＿★＿＿＿＿、引き受けることにした。","opts":["悩んだのだが", "と言われて", "どうしても", "苦手なので"],"answer":[3, 0, 2, 1],"correct":"苦手なので 悩んだのだが★どうしても と言われて","grammar":[{"rule":"引用と：「どうしても」と言われて，と前接被引用短语（不需要完整句）","catId":"futsuu"}]},
+{"id":"q24","year":"2021.12 Q44","stem":"必要のない物でも、欲しくなると＿＿＿＿★＿＿＿＿しまう。","opts":["買わずには", "すぐ買って", "いられなく", "なって"],"answer":[0, 2, 3, 1],"correct":"買わずには いられなく★なって すぐ買って","grammar":[{"rule":"「Vずにはいられない」固定：ずに（否定て形）＋は＋いられない","catId":"te"}]},
+{"id":"q25","year":"2021.7 Q44","stem":"「サラリーマンから農家＿＿＿＿★＿＿＿＿があるんだね。」","opts":["勇気", "とは", "ずいぶん", "になる"],"answer":[3, 1, 2, 0],"correct":"になる とは★ずいぶん 勇気","grammar":[{"rule":"「とは」感叹/意外用法：竟然是……（与引用とは不同）","catId":"futsuu"}]},
+{"id":"q26","year":"2021.7 Q46","stem":"参考書を読んで完璧に＿＿＿＿★＿＿＿＿ということがよくある。","opts":["理解した", "問題を解いてみると", "できない", "つもりでも"],"answer":[0, 3, 1, 2],"correct":"理解した つもりでも★問題を解いてみると できない","grammar":[{"rule":"「Vたつもりでも」：た形＋つもりで＋も，即使自以为……了","catId":"ta"},{"rule":"「Vてみると」：て形＋みる＋と，一旦试着……结果","catId":"te"}]},
+{"id":"q27","year":"2021.7 Q47","stem":"この池に＿＿＿＿★＿＿＿＿そうだ。","opts":["ものもいる", "すむ", "魚の中には", "100年以上生きる"],"answer":[1, 2, 3, 0],"correct":"すむ 魚の中には★100年以上生きる ものもいる","grammar":[{"rule":"连体修饰：動詞辞書形（すむ）直接修饰后面名词（魚）","catId":"jisho"}]},
+{"id":"q28","year":"2020.12 Q45","stem":"私が就職した商社は、大手の＿＿＿＿★＿＿＿＿新人でも大きな仕事を任せてもらえるので、やりがいがある。","opts":["決して", "商社に比べると", "やる気があれば", "規模は大きくないが"],"answer":[1, 0, 3, 2],"correct":"商社に比べると 決して★規模は大きくないが やる気があれば","grammar":[{"rule":"「決して＋ない」呼応副词：出现就预判后面必须接否定形式","catId":"noun"},{"rule":"「にくらべると」接名词：与……相比","catId":"noun"}]},
+{"id":"q29","year":"2019.12 Q46","stem":"家の近くの本屋では＿＿＿＿★＿＿＿＿ので少し遠いけど行ってみようと思う。","opts":["買えなかった漫画の最新号が", "まだ買えるらしい", "もう売り切れていて", "隣町のABC書店に行けば"],"answer":[2, 0, 3, 1],"correct":"もう売り切れていて 買えなかった漫画の最新号が★隣町のABC書店に行けば まだ買えるらしい","grammar":[{"rule":"「Vていて」：て形表原因/并列，もう売り切れていて＝已经卖完了所以……","catId":"te"}]},
+{"id":"q30","year":"2019.12 Q43","stem":"他社からの質問や問い合わせには、一度社内で＿＿＿＿★＿＿＿＿できないことになっています。","opts":["検討", "回答", "でないと", "してから"],"answer":[0, 3, 2, 1],"correct":"検討 してから★でないと 回答","grammar":[{"rule":"「Vてからでないと＋Vできない」：不先做……就不能……（双重否定强调顺序）","catId":"te"}]},
+{"id":"q31","year":"2019.7 Q44","stem":"田中さんの＿＿＿＿★＿＿＿＿ですか。速いですね。","opts":["もう", "息子さん", "高校生", "も"],"answer":[1, 3, 0, 2],"correct":"息子さん も★もう 高校生","grammar":[{"rule":"「Nの＋N2」：の后直接接名词（息子さん），不能接动词","catId":"noun"}]},
+{"id":"q32","year":"2015.12 Q47","stem":"大雨の中を傘を差さずに＿＿＿＿★＿＿今朝からずっと鼻水が止まらない。","opts":["風邪が", "治りかけていた", "またひどくなって", "帰ったせいか"],"answer":[3, 1, 0, 2],"correct":"帰ったせいか 治りかけていた★風邪が またひどくなって","grammar":[{"rule":"「Vたせいか」：た形＋せいか，大概是因为……的原因吧（不确定推测）","catId":"ta"},{"rule":"「治りかけていた」：ます形＋かける接尾，快要……；连体修饰后面名词","catId":"masu"}]},
+{"id":"q33","year":"2015.12 Q46","stem":"レストランでアルバイトを始めてから＿＿＿＿★＿＿ミスまでしてしまった。","opts":["今日で1年たつのに", "皿を割るという", "うえに", "客の注文を間違えた"],"answer":[0, 3, 2, 1],"correct":"今日で1年たつのに 客の注文を間違えた★うえに 皿を割るという","grammar":[{"rule":"「Vたうえに」：た形完整从句＋うえに，不仅……而且……（递进追加）","catId":"ta"}]},
+{"id":"q34","year":"2016.7 Q45","stem":"これまでずっと＿＿★＿＿＿＿。","opts":["環境にいたか", "毎日だった", "どんなに恵まれた", "と感じさせられる"],"answer":[2, 0, 1, 3],"correct":"どんなに恵まれた★環境にいたか 毎日だった と感じさせられる","grammar":[{"rule":"「どんなに〜か」感叹从句，作为と引用内容的前半段","catId":"futsuu"}]},
+{"id":"q35","year":"2016.12 Q49","stem":"ビジネスで成功できる人とできない人の違いは、どんなに大変な状況でもあきらめずに＿＿＿＿＿＿★と思う。","opts":["かどうか", "取り組める", "にある", "最後まで"],"answer":[3, 1, 0, 2],"correct":"最後まで 取り組める かどうか★にある","grammar":[{"rule":"「Vられるかどうか」：可能形完整从句＋かどうか，是否能……","catId":"futsuu"}]},
+{"id":"q36","year":"2016.12 Q48","stem":"彫刻家川村たけるが作る動物の彫刻作品は、形はシンプル＿＿＿＿＿＿★生命力にあふれている。","opts":["動き出し", "そうな", "ながら", "今にも"],"answer":[2, 3, 0, 1],"correct":"ながら 今にも 動き出し★そうな","grammar":[{"rule":"「形容詞/ナ形＋ながら」：転折让步，シンプルながら＝虽然简单","catId":"masu"},{"rule":"「今にも＋Vますそうな」：眼看就要……似的，そうな连体修饰名词","catId":"masu"}]},
+{"id":"q37","year":"2017.7 Q47","stem":"雑誌か＿＿★＿＿＿＿人との出会いだとインタビューに答えていたのを見て、本当にそうだなと思った。","opts":["自分にとって", "何かで", "人生で一番大切なのは", "誰かが"],"answer":[1, 3, 2, 0],"correct":"何かで 誰かが★人生で一番大切なのは 自分にとって","grammar":[{"rule":"「〜のは」：のは前接完整从句，作为主语","catId":"futsuu"},{"rule":"「にとって」接名词：对……而言","catId":"noun"}]},
+{"id":"q38","year":"2017.12 Q46","stem":"それは＿＿★＿＿＿＿だけなので、やり方を身につければ必ず片付けられるようになります。","opts":["決して", "やり方を知らない", "ではなく", "性格や能力の問題"],"answer":[0, 3, 2, 1],"correct":"決して★性格や能力の問題 ではなく やり方を知らない","grammar":[{"rule":"「決して＋ない/ではなく」呼応副词：出现就预判后接否定形式","catId":"noun"}]},
+{"id":"q39","year":"2017.12 Q47","stem":"X市には、市民のための文化施設が＿＿★＿＿＿＿行っている。","opts":["はじめとした", "二つあり", "さまざまな催しを", "音楽コンサートを"],"answer":[1, 3, 0, 2],"correct":"二つあり★音楽コンサートを はじめとした さまざまな催しを","grammar":[{"rule":"「Nをはじめとした＋N2」：以N为首的N2，をはじめ固定搭配","catId":"noun"}]},
+{"id":"q40","year":"2017.12 Q45","stem":"私が新しい単語を覚える★＿＿＿＿＿＿思いついた方法です。","opts":["のに", "いい方法はないか", "とあれこれ考えた", "末に"],"answer":[0, 1, 2, 3],"correct":"★のに いい方法はないか とあれこれ考えた 末に","grammar":[{"rule":"「Vる＋のに」目的用法：辞書形＋のに＝为了……（非転折）","catId":"jisho"},{"rule":"「Vた末に」：た形完整从句＋末に＝经过一番……最终……","catId":"ta"}]}
+];
+
+var GRAMDATA = [
+  {id:"masu",label:"ます形",short:"接ます形",desc:"動詞のます形（連用形）に続く。食べ・見・し・行き のように「ます」を外した形。",
+   items:[
+    {form:"〜にくい",mean:"难以……",conn:"V-ます形＋にくい",ja:"このボタンは押しにくい。",zh:"这个按钮很难按。"},
+    {form:"〜やすい",mean:"容易……",conn:"V-ます形＋やすい",ja:"このペンは書きやすい。",zh:"这支笔很好写。"},
+    {form:"〜すぎる",mean:"过于……",conn:"V/Adj-ます形/語幹＋すぎる",ja:"食べすぎると体に悪い。",zh:"吃太多对身体不好。"},
+    {form:"〜かねない",mean:"说不定会……（有坏结果）",conn:"V-ます形＋かねない",ja:"このまま放置すると大事故が起きかねない。",zh:"这样放置下去说不定会出大事故。"},
+    {form:"〜がたい",mean:"难以……（书面语）",conn:"V-ます形＋がたい",ja:"彼の言葉は信じがたい。",zh:"他的话难以置信。"},
+    {form:"〜つつ",mean:"一边……一边／尽管……",conn:"V-ます形＋つつ",ja:"知りつつも、何も言わなかった。",zh:"尽管知道，也什么都没说。"}
+  ]},
+  {id:"jisho",label:"辞書形",short:"接辞書形",desc:"動詞の基本形（辞書形）に続く。食べる・見る・する・行く のそのままの形。",
+   items:[
+    {form:"〜だけ",mean:"只是……",conn:"V辞書形＋だけ",ja:"見るだけで買わなかった。",zh:"只是看了看，没有买。"},
+    {form:"〜ばかり",mean:"净是……／光……",conn:"V辞書形＋ばかり",ja:"文句を言うばかりで行動しない。",zh:"光抱怨却不行动。"},
+    {form:"〜ところ",mean:"正要……／即将……",conn:"V辞書形＋ところ",ja:"今から出るところです。",zh:"我正要出发。"},
+    {form:"〜たびに",mean:"每次……",conn:"V辞書形/N＋たびに",ja:"会うたびに成長しているね。",zh:"每次见面都感觉你成长了。"},
+    {form:"〜や否や",mean:"一……就……（立即）",conn:"V辞書形＋や否や",ja:"駅に着くや否や電話が鳴った。",zh:"刚到车站，电话就响了。"}
+  ]},
+  {id:"ta",label:"た形",short:"接た形",desc:"動詞のた形（過去形）に続く。食べた・見た・した・行った。",
+   items:[
+    {form:"〜うえで",mean:"……之后（基于此再……）",conn:"V-た形＋うえで",ja:"よく考えたうえで決めてください。",zh:"请仔细考虑之后再做决定。"},
+    {form:"〜あげく",mean:"……的结果（常含负面语气）",conn:"V-た形＋あげく",ja:"さんざん悩んだあげく、諦めてしまった。",zh:"纠结了半天，最终还是放弃了。"},
+    {form:"〜とたん",mean:"刚……就……（紧接着）",conn:"V-た形＋とたん（に）",ja:"外に出たとたん、雨が降り始めた。",zh:"刚一出门，雨就开始下了。"},
+    {form:"〜きり",mean:"……之后就一直（没有后续）",conn:"V-た形＋きり",ja:"彼は去年行ったきり、連絡がない。",zh:"他去年走了之后就再没联系过。"}
+  ]},
+  {id:"te",label:"て形",short:"接て形",desc:"動詞のて形（接続形）に続く。食べて・見て・して・行って。",
+   items:[
+    {form:"〜てしまう",mean:"（遗憾/无意地）做完了……",conn:"V-て形＋しまう",ja:"大事なメモを忘れてしまった。",zh:"把重要的备忘录忘了。"},
+    {form:"〜てみる",mean:"试着……",conn:"V-て形＋みる",ja:"一度食べてみてください。",zh:"请试着吃一次。"},
+    {form:"〜ても",mean:"即使……也",conn:"V-て形＋も",ja:"どれだけ努力しても報われない。",zh:"无论多么努力都得不到回报。"},
+    {form:"〜ておく",mean:"预先……／事先……",conn:"V-て形＋おく",ja:"会議の前に資料を調べておく。",zh:"在会议前事先查好资料。"}
+  ]},
+  {id:"noun",label:"名詞接続",short:"接名詞",desc:"名詞（体言）にそのまま続く助詞句・後置詞。",
+   items:[
+    {form:"〜によって",mean:"通过……／由于……",conn:"N＋によって",ja:"血液によって酸素が運ばれる。",zh:"氧气通过血液被运输。"},
+    {form:"〜として",mean:"作为……",conn:"N＋として",ja:"政治家としての責任がある。",zh:"作为政治家有其责任。"},
+    {form:"〜にしては",mean:"以……而言却（出乎意料）",conn:"N＋にしては",ja:"今の時期にしては暖かい。",zh:"以现在的季节来说还挺暖和的。"},
+    {form:"〜にくらべて",mean:"与……相比",conn:"N＋にくらべて",ja:"去年にくらべて売り上げが上がった。",zh:"与去年相比，销售额提高了。"},
+    {form:"〜にとって",mean:"对……而言",conn:"N＋にとって",ja:"私にとって大切な思い出だ。",zh:"对我来说是宝贵的回忆。"},
+    {form:"〜をめぐって",mean:"围绕……",conn:"N＋をめぐって",ja:"その問題をめぐって議論が続いている。",zh:"围绕那个问题，讨论一直在继续。"},
+    {form:"〜にしか〜ない",mean:"只有……才有/能",conn:"N＋にしか＋否定",ja:"その感動はその場にいた人にしかわからない。",zh:"那种感动只有在场的人才能理解。"},
+    {form:"〜に限らず",mean:"不限于……",conn:"N＋に限らず",ja:"学生に限らず、誰でも参加できる。",zh:"不限于学生，任何人都可以参加。"}
+  ]},
+  {id:"futsuu",label:"普通形",short:"接普通形",desc:"前に完整な从句（普通形）が来る。辞書形/ない形/た形/なかった形の四択。この類は「前に完整な文」を探すのが鍵。",
+   items:[
+    {form:"〜こと（を/が）",mean:"将动作名词化（常接知覚動詞）",conn:"普通形＋こと",ja:"目を合わせることすらできなかった。",zh:"连对视都做不到。"},
+    {form:"〜ことから",mean:"从……可知／以……为依据",conn:"普通形＋ことから",ja:"名前が同じことから、混同されやすい。",zh:"由于名字相同，很容易被混淆。"},
+    {form:"〜ことを考えると",mean:"考虑到……（的话）",conn:"普通形＋ことを考えると",ja:"平日だったことを考えると、人が多かった。",zh:"考虑到是平日，人真的很多。"},
+    {form:"〜あまり",mean:"过于……以至于（常为负面结果）",conn:"普通形/N＋のあまり",ja:"心配するあまり、眠れなかった。",zh:"太过担心，以至于睡不着觉。"},
+    {form:"〜というが",mean:"据说……但是",conn:"普通形＋というが",ja:"効果があるというが、本当だろうか。",zh:"虽然据说有效果，但真的假的。"},
+    {form:"〜ように",mean:"像……那样／为了……",conn:"普通形/V辞書形＋ように",ja:"わかるように説明してください。",zh:"请用让人能理解的方式说明。"},
+    {form:"〜のは〜からだ",mean:"……的原因是……",conn:"普通形＋のは……からだ",ja:"早く済んだのは彼が手伝ってくれたからだ。",zh:"之所以早早结束是因为他帮了忙。"}
+  ]},
+  {id:"sa",label:"さ変換",short:"〜さ名詞化",desc:"い形容詞の語幹に「さ」をつけて抽象名詞にする。",
+   items:[
+    {form:"重さ",mean:"重量",conn:"重い → 重さ",ja:"この荷物の重さは5キロです。",zh:"这件行李的重量是5公斤。"},
+    {form:"大きさ",mean:"大小",conn:"大きい → 大きさ",ja:"ビルの大きさに驚いた。",zh:"对大楼的巨大感到惊讶。"},
+    {form:"高さ",mean:"高度",conn:"高い → 高さ",ja:"この山の高さは3000メートルだ。",zh:"这座山的高度是3000米。"},
+    {form:"暖かさ",mean:"温暖的程度",conn:"暖かい → 暖かさ",ja:"春の暖かさが戻ってきた。",zh:"春天的温暖回来了。"},
+    {form:"静かさ",mean:"安静的程度",conn:"静か（な）→ 静かさ",ja:"夜の静かさが心地よい。",zh:"夜晚的宁静让人舒适。"}
+  ]}
+];
+
+/* ─── TABS & MODE ─── */
+var tabsEl = document.getElementById("tabs");
+var toolbarEl = document.getElementById("toolbar");
+var sheetEl = document.getElementById("sheet");
+var quizEl = document.getElementById("quiz");
+var sortEl = document.getElementById("sortquiz");
+var hintEl = document.getElementById("hint");
+
+var currentMode = "list";
+var currentCat = GRAMDATA[0].id;
+
+/* Build tabs */
+var tabDefs = [{id:"all",label:"全部"}].concat(GRAMDATA.map(function(d){return {id:d.id,label:d.short};})).concat([{id:"_sort",label:"★並べ替え"}]);
+tabDefs.forEach(function(td){
+  var t = document.createElement("div");
+  t.className = "tab"; t.textContent = td.label; t.dataset.id = td.id;
+  t.addEventListener("click", function(){
+    if(td.id === "_sort"){ startSort(); }
+    else { showList(td.id); }
+  });
+  tabsEl.appendChild(t);
+});
+
+function setTabActive(id){
+  tabsEl.querySelectorAll(".tab").forEach(function(t){ t.classList.toggle("on", t.dataset.id === id); });
+}
+
+/* Build toolbar */
+function buildToolbar(mode){
+  toolbarEl.innerHTML = "";
+  if(mode === "list"){
+    var b = makeBtn("接続テスト", function(){ startGramQuiz(); });
+    toolbarEl.appendChild(b);
+  } else if(mode === "gramquiz"){
+    var b = makeBtn("一覧へ戻る", function(){ showList(currentCat); });
+    toolbarEl.appendChild(b);
+  } else if(mode === "sort"){
+    var b1 = makeBtn("一覧へ戻る", function(){ showList(currentCat); });
+    var b2 = makeBtn("次の問題", function(){ nextSort(); }); b2.id="sq-next-btn";
+    toolbarEl.appendChild(b1);
+    toolbarEl.appendChild(b2);
+  }
+}
+function makeBtn(label, fn){
+  var b = document.createElement("button"); b.className = "btn"; b.textContent = label;
+  b.addEventListener("click", fn); return b;
+}
+
+/* ─── LIST VIEW ─── */
+function renderCat(cat){
+  var h = "";
+  h += "<div class='cat-label' id='sec-" + cat.id + "'>" + cat.short + "（" + cat.label + "）</div>";
+  h += "<div class='cat-desc'>" + cat.desc + "</div>";
+  cat.items.forEach(function(it, idx){
+    var eid = cat.id + "_" + idx;
+    h += "<div class='gcard' id='" + eid + "'>";
+    h += "<div class='gcard-head'><span class='gcard-form'>" + it.form + "</span><span class='gcard-mean'>" + it.mean + "</span></div>";
+    h += "<div class='gcard-ex'><span class='conn'>" + it.conn + "</span><div class='ja'>" + it.ja + "</div><div class='zh'>" + it.zh + "</div></div>";
+    h += "</div>";
+  });
+  return h;
+}
+
+function showList(id, scrollTo){
+  currentMode = "list"; currentCat = (id === "all") ? GRAMDATA[0].id : id;
+  setTabActive(id);
+  buildToolbar("list");
+  sheetEl.style.display = ""; quizEl.classList.remove("active"); sortEl.classList.remove("active");
+  hintEl.textContent = "タップで例文展開 · 接続テスト / 並べ替えで練習";
+  var h = "";
+  if(id === "all"){ GRAMDATA.forEach(function(c){ h += renderCat(c); }); }
+  else { GRAMDATA.forEach(function(c){ if(c.id === id) h += renderCat(c); }); }
+  sheetEl.innerHTML = h;
+  sheetEl.querySelectorAll(".gcard").forEach(function(card){
+    card.addEventListener("click", function(){ card.classList.toggle("open"); });
+  });
+  if(scrollTo){
+    setTimeout(function(){
+      var el = document.getElementById("sec-" + scrollTo);
+      if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
+    }, 80);
+  }
+}
+
+/* ─── GRAMMAR QUIZ ─── */
+var gScore = 0, gAsked = 0;
+var GPOOL = [];
+function buildGPool(){
+  GPOOL = [];
+  GRAMDATA.forEach(function(cat){ cat.items.forEach(function(it){ GPOOL.push({cat:cat.label, item:it}); }); });
+  shuffle(GPOOL);
+}
+var gQi = 0;
+function startGramQuiz(){
+  currentMode = "gramquiz";
+  buildToolbar("gramquiz");
+  sheetEl.style.display = "none"; quizEl.classList.add("active"); sortEl.classList.remove("active");
+  hintEl.textContent = "語法点を見て接続形を4択で答える";
+  gScore = 0; gAsked = 0; buildGPool(); gQi = 0;
+  newGramQ();
+}
+function allConns(){ var r=[]; GRAMDATA.forEach(function(c){ c.items.forEach(function(it){ if(r.indexOf(it.conn)<0) r.push(it.conn); }); }); return r; }
+function newGramQ(){
+  if(gQi >= GPOOL.length){ gQi=0; shuffle(GPOOL); }
+  var cur = GPOOL[gQi++];
+  var correct = cur.item.conn;
+  var conns = allConns();
+  var opts = [correct]; var guard=0;
+  while(opts.length<4 && guard<200){ var r=conns[Math.floor(Math.random()*conns.length)]; if(opts.indexOf(r)<0) opts.push(r); guard++; }
+  shuffle(opts);
+  var h = "<div class='qscore'>正解 " + gScore + " / " + gAsked + "</div>";
+  h += "<div class='qbox'><div class='qform'>" + cur.item.form + "</div><div class='qmean'>" + cur.item.mean + "  ／ " + cur.cat + "</div></div>";
+  opts.forEach(function(o){ var sv=o.replace(/\x27/g,"&#39;"); h += "<button class='opt' data-v='" + sv + "'>" + o + "</button>"; });
+  quizEl.innerHTML = h;
+  quizEl.querySelectorAll(".opt").forEach(function(btn){
+    btn.addEventListener("click", function(){ gramAnswer(btn, correct); });
+  });
+}
+function gramAnswer(btn, correct){
+  gAsked++;
+  if(btn.getAttribute("data-v")===correct){ gScore++; btn.classList.add("right"); }
+  else { btn.classList.add("wrong"); }
+  quizEl.querySelectorAll(".opt").forEach(function(b){
+    b.classList.add("locked");
+    if(b.getAttribute("data-v")===correct) b.classList.add("right");
+  });
+  var s=quizEl.querySelector(".qscore"); if(s) s.textContent="正解 "+gScore+" / "+gAsked;
+  var nw=document.createElement("button"); nw.className="btn"; nw.style.marginTop="12px"; nw.textContent="次へ →";
+  nw.addEventListener("click", newGramQ);
+  quizEl.appendChild(nw);
+}
+
+/* ─── SORT QUIZ ─── */
+var sqPool = []; var sqIdx = 0;
+var sqSelected = [];
+var sqLocked = false;
+
+function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; } return a; }
+
+function startSort(){
+  currentMode = "sort";
+  setTabActive("_sort");
+  buildToolbar("sort");
+  sheetEl.style.display="none"; quizEl.classList.remove("active"); sortEl.classList.add("active");
+  hintEl.textContent = "选项按正确顺序点击 · 点已选项可撤回";
+  sqPool = QDATA.slice(); shuffle(sqPool); sqIdx = 0;
+  renderSort();
+}
+
+function nextSort(){
+  sqIdx++;
+  if(sqIdx >= sqPool.length){ sqIdx=0; shuffle(sqPool); }
+  renderSort();
+}
+
+function renderSort(){
+  sqSelected = []; sqLocked = false;
+  var q = sqPool[sqIdx];
+  var opts = q.opts.slice();
+  var shuffled = opts.slice(); shuffle(shuffled);
+
+  var h = "<div class='sq-header'><span style='font-family:var(--mono);font-size:11px;color:#888;'>" + q.year + "</span><span>问题 " + (sqIdx+1) + " / " + sqPool.length + "</span></div>";
+  h += "<div class='sq-stem'>" + q.stem + "</div>";
+  h += "<div class='sq-slots' id='sq-slots'></div>";
+  h += "<div class='sq-opts' id='sq-opts'>";
+  shuffled.forEach(function(o, i){
+    var idx = opts.indexOf(o);
+    h += '<div class="sq-opt" data-optidx="' + idx + '" data-label="' + o + '">' + o + '</div>';
+  });
+  h += "</div>";
+  h += "<div class='sq-actions'>";
+  h += "<button class='btn' id='sq-check'>確認</button>";
+  h += "<button class='btn' id='sq-reset'>リセット</button>";
+  h += "</div>";
+  h += "<div class='sq-result' id='sq-result'></div>";
+  sortEl.innerHTML = h;
+
+  sortEl.querySelectorAll(".sq-opt").forEach(function(el){
+    el.addEventListener("click", function(){
+      if(sqLocked) return;
+      if(el.classList.contains("used")) return;
+      var idx = parseInt(el.dataset.optidx);
+      sqSelected.push(idx);
+      el.classList.add("used");
+      renderSlots(q.opts);
+    });
+  });
+
+  document.getElementById("sq-check").addEventListener("click", function(){ checkSort(q); });
+  document.getElementById("sq-reset").addEventListener("click", function(){ renderSort(); });
+}
+
+function renderSlots(opts){
+  var slotsEl = document.getElementById("sq-slots");
+  slotsEl.innerHTML = "";
+  sqSelected.forEach(function(idx, pos){
+    var el = document.createElement("div");
+    el.className = "slot-item"; el.textContent = opts[idx];
+    el.addEventListener("click", function(){
+      if(sqLocked) return;
+      sqSelected.splice(pos, 1);
+      var optEl = sortEl.querySelector('.sq-opt[data-optidx="' + idx + '"]');
+      if(optEl) optEl.classList.remove("used");
+      renderSlots(opts);
+    });
+    slotsEl.appendChild(el);
+  });
+}
+
+function checkSort(q){
+  if(sqSelected.length < q.opts.length){ alert("まだ " + (q.opts.length - sqSelected.length) + " 个选项没放"); return; }
+  sqLocked = true;
+  var isOk = true;
+  for(var i=0; i<q.answer.length; i++){
+    if(sqSelected[i] !== q.answer[i]){ isOk=false; break; }
+  }
+  var resEl = document.getElementById("sq-result");
+  var h = "";
+  if(isOk){
+    h += "<div class='sq-result-head ok'>✓ 正解！</div>";
+    h += "<div class='sq-correct'>" + q.correct_str + "</div>";
+  } else {
+    h += "<div class='sq-result-head ng'>✗ 不正解</div>";
+    h += "<div class='sq-correct'><b>正确顺序：</b>" + q.correct_str + "</div>";
+    h += "<div class='sq-grammar'><div class='sq-grammar-title'>涉及接续规则：</div>";
+    q.grammar.forEach(function(g){
+      var catLabel = "";
+      GRAMDATA.forEach(function(c){ if(c.id===g.catId) catLabel=c.short; });
+      h += "<div class='sq-rule'>" + g.rule;
+      h += "<br><span class='sq-rule-link' data-catid='" + g.catId + "'>→ 查看「" + catLabel + "」接续表</span>";
+      h += "</div>";
+    });
+    h += "</div>";
+  }
+  resEl.innerHTML = h;
+  resEl.classList.add("show");
+  resEl.querySelectorAll(".sq-rule-link").forEach(function(lnk){
+    lnk.addEventListener("click", function(){
+      showList(lnk.dataset.catid, lnk.dataset.catid);
+    });
+  });
+}
+/* init */
+showList(GRAMDATA[0].id);
+</script>
+</body>
+</html>
