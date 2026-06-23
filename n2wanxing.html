@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>N2 完形填空</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width:100%; height:100%; overflow:hidden; font-family:'MS UI Gothic','ヒラギノ角ゴ Pro','Hiragino Kaku Gothic Pro',Osaka,Tahoma,sans-serif; background:#e0e0e0; }
+.screen { width:100vw; height:100vh; height:100dvh; display:flex; flex-direction:column; overflow:hidden; background:#e8e8e8; }
+.taskbar { background:linear-gradient(180deg,#c8c8cc 0%,#a8a8b0 100%); border-bottom:1px solid #888890; padding:0 6px; display:flex; align-items:flex-end; gap:2px; flex-shrink:0; padding-top:env(safe-area-inset-top,0px); }
+.tab-btn { background:#d8d8dc; border:1px solid #888890; border-bottom:none; border-radius:4px 4px 0 0; padding:4px 14px; font-size:12.1px; color:#333340; cursor:pointer; font-family:inherit; line-height:18px; }
+.tab-btn.active { background:#e8e8e8; color:#0a0a14; font-weight:bold; border-bottom:1px solid #e8e8e8; margin-bottom:-1px; z-index:1; }
+.tab-spacer { flex:1; }
+.status-icons { display:flex; gap:4px; align-items:center; padding-bottom:4px; }
+.status-icon { width:14px; height:14px; border:1px solid #555560; border-radius:2px; display:inline-flex; align-items:center; justify-content:center; font-size:7.7px; color:#333340; background:#d0d0d8; }
+.menubar { background:linear-gradient(180deg,#d0d0d4 0%,#b8b8bc 100%); border-bottom:1px solid #888890; padding:2px 8px; display:flex; align-items:center; gap:10px; font-size:12.1px; color:#1a1a2a; flex-shrink:0; }
+.menu-item { cursor:pointer; padding:1px 4px; border-radius:2px; }
+.menu-item:hover { background:#8888aa; color:#fff; }
+.menu-sep { flex:1; }
+.menu-right { font-size:11px; color:#44445a; }
+.page { display:none; flex:1; flex-direction:column; overflow:hidden; min-height:0; }
+.page.visible { display:flex; }
+
+/* GRAMMAR */
+.grammar-list-header { background:linear-gradient(180deg,#b0b0b8 0%,#909098 100%); padding:4px 8px; font-size:11px; color:#fff; border-bottom:1px solid #606068; display:flex; justify-content:space-between; flex-shrink:0; }
+.grammar-list { flex:1; overflow-y:auto; background:#e8e8e8; -webkit-overflow-scrolling:touch; }
+.grammar-list::-webkit-scrollbar { width:8px; }
+.grammar-list::-webkit-scrollbar-track { background:#c8c8cc; }
+.grammar-list::-webkit-scrollbar-thumb { background:#888890; border-radius:2px; }
+.grammar-row { display:flex; align-items:center; padding:8px 10px; border-bottom:1px solid #cccccc; cursor:pointer; gap:8px; background:#e8e8e8; }
+.grammar-row:active { background:#c8c8cc; }
+.grammar-row.selected { background:#3a3a5a; color:#fff; }
+.grammar-row.selected .grammar-tag { color:#aaaacc; background:#5a5a7a; border-color:#7a7a9a; }
+.grammar-icon { width:20px; height:20px; border:1px solid #888890; border-radius:3px; background:#d8d8e0; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:11px; color:#333340; }
+.grammar-name { font-size:13.2px; font-weight:bold; flex:1; color:#0a0a14; }
+.grammar-row.selected .grammar-name { color:#fff; }
+.grammar-tag { font-size:9.9px; color:#44445a; background:#d0d0d8; border:1px solid #9090a0; border-radius:2px; padding:1px 5px; white-space:nowrap; }
+.grammar-detail { background:#f0f0f0; border-top:1px solid #c8c8d0; border-bottom:2px solid #7070a0; padding:8px 10px; -webkit-overflow-scrolling:touch; }
+.detail-title { font-size:15.4px; font-weight:bold; color:#0a0a14; border-bottom:1px solid #b0b0b8; padding-bottom:4px; margin-bottom:5px; }
+.detail-body { font-size:13.2px; color:#1a1a2a; line-height:1.7; }
+.detail-example { margin-top:5px; background:#e0e0e8; border-left:3px solid #7070a0; padding:4px 7px; font-size:13.2px; color:#0a0a14; line-height:1.6; }
+.detail-source { font-size:11px; color:#6666aa; margin-top:3px; }
+.detail-empty { color:#888890; font-size:13.2px; font-style:italic; padding-top:12px; text-align:center; }
+
+/* QUIZ */
+.quiz-content { flex:1; overflow-y:auto; padding:8px 10px; background:#e8e8e8; -webkit-overflow-scrolling:touch; min-height:0; }
+.quiz-content::-webkit-scrollbar { width:8px; }
+.quiz-content::-webkit-scrollbar-track { background:#c8c8cc; }
+.quiz-content::-webkit-scrollbar-thumb { background:#888890; border-radius:2px; }
+.quiz-progress-bar { background:#b8b8c0; height:5px; border-radius:2px; margin-bottom:7px; }
+.quiz-progress-fill { background:#4a4a7a; height:100%; border-radius:2px; transition:width 0.3s; }
+.quiz-meta { font-size:11px; color:#44445a; margin-bottom:7px; display:flex; justify-content:space-between; }
+.quiz-source { font-size:9.9px; color:#888890; margin-bottom:4px; }
+.quiz-passage { background:#f0f0f0; border:1px solid #b0b0b8; border-radius:3px; padding:8px 10px; font-size:14.3px; line-height:2.1; color:#0a0a14; margin-bottom:8px; }
+.blank-slot { display:inline-block; border-bottom:1px solid #3a3a5a; min-width:60px; text-align:center; font-weight:bold; color:#2a2a6a; background:#d8d8f0; padding:0 4px; border-radius:2px; font-size:13.2px; }
+.blank-slot.answered-correct { color:#1a4a1a; background:#c8e8c8; border-color:#2a6a2a; }
+.blank-slot.answered-wrong { color:#6a1a1a; background:#ecc8c8; border-color:#8a2a2a; text-decoration:line-through; }
+.choices-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:8px; }
+.choice-btn { background:linear-gradient(180deg,#e0e0e4 0%,#c8c8cc 100%); border:1px solid #888890; border-radius:4px; padding:8px 8px; font-size:13.2px; color:#0a0a14; cursor:pointer; text-align:left; font-family:inherit; line-height:1.4; box-shadow:1px 1px 0 #9090a0; -webkit-tap-highlight-color:transparent; }
+.choice-btn:active { background:#a0a0a8; box-shadow:none; transform:translate(1px,1px); }
+.choice-btn.correct { background:#90cc90; border-color:#2a6a2a; color:#0a2a0a; font-weight:bold; box-shadow:1px 1px 0 #1a5a1a; }
+.choice-btn.wrong { background:#cc7070; border-color:#6a1a1a; color:#fff; box-shadow:1px 1px 0 #4a0a0a; }
+.choice-btn.disabled { cursor:default; }
+.choice-label { display:inline-block; width:14px; font-weight:bold; color:#44445a; font-size:11px; }
+.choice-btn.correct .choice-label, .choice-btn.wrong .choice-label { color:inherit; }
+.feedback-box { background:#f0ede8; border:1px solid #a09888; border-radius:3px; padding:8px 10px; margin-bottom:8px; display:none; }
+.feedback-box.visible { display:block; }
+.feedback-header { font-size:13.2px; font-weight:bold; margin-bottom:5px; }
+.feedback-correct .feedback-header { color:#1a4a1a; }
+.feedback-wrong .feedback-header { color:#6a1a1a; }
+.feedback-grammar-name { font-size:12.1px; color:#3a2a0a; background:#e0d8c8; border:1px solid #a09878; border-radius:2px; padding:1px 6px; display:inline-block; margin-bottom:4px; }
+.feedback-explanation { font-size:12.1px; color:#2a1a0a; line-height:1.6; margin-bottom:6px; }
+.feedback-grammar-link { display:inline-block; background:linear-gradient(180deg,#a0a0c0 0%,#7878a0 100%); border:1px solid #4a4a7a; border-radius:3px; padding:4px 12px; font-size:12.1px; color:#fff; cursor:pointer; font-family:inherit; box-shadow:1px 1px 0 #3a3a5a; -webkit-tap-highlight-color:transparent; }
+.feedback-grammar-link:active { box-shadow:none; transform:translate(1px,1px); }
+.quiz-nav { display:flex; gap:6px; padding:6px 10px; background:#d0d0d4; border-top:1px solid #909098; flex-shrink:0; padding-bottom:max(6px,env(safe-area-inset-bottom)); }
+.nav-btn { background:linear-gradient(180deg,#b0b0c0 0%,#8888a0 100%); border:1px solid #5a5a7a; border-radius:4px; padding:6px 14px; font-size:13.2px; color:#fff; cursor:pointer; font-family:inherit; box-shadow:1px 1px 0 #4a4a6a; -webkit-tap-highlight-color:transparent; }
+.nav-btn:active { box-shadow:none; transform:translate(1px,1px); }
+.nav-btn.primary { background:linear-gradient(180deg,#6a6a9a 0%,#4a4a7a 100%); border-color:#2a2a5a; box-shadow:1px 1px 0 #1a1a3a; }
+.score-screen { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px; gap:10px; }
+.score-title { font-size:14.3px; font-weight:bold; color:#0a0a14; }
+.score-number { font-size:39.6px; font-weight:bold; color:#2a2a6a; font-family:'Courier New',monospace; border:2px solid #6a6a9a; border-radius:4px; padding:8px 20px; background:#e0e0f0; box-shadow:2px 2px 0 #4a4a7a; }
+.score-detail { font-size:12.1px; color:#44445a; text-align:center; }
+.score-miss-list { background:#f0f0f0; border:1px solid #b0b0b8; border-radius:3px; padding:6px 10px; width:100%; font-size:12.1px; color:#1a1a2a; max-height:40vh; overflow-y:auto; }
+.score-miss-item { padding:4px 0; border-bottom:1px dotted #b0b0b8; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.score-miss-item:last-child { border-bottom:none; }
+.score-miss-link { color:#4a4a7a; cursor:pointer; font-size:11px; white-space:nowrap; }
+</style>
+</head>
+<body>
+<div class="screen">
+  <div class="taskbar">
+    <button class="tab-btn" id="tab-grammar" onclick="switchPage('grammar')">語法</button>
+    <button class="tab-btn active" id="tab-quiz" onclick="switchPage('quiz')">答題</button>
+    <div class="tab-spacer"></div>
+    <div class="status-icons">
+      <span class="status-icon">G</span>
+      <span class="status-icon">✉</span>
+      <span class="status-icon">⚡</span>
+    </div>
+  </div>
+  <div class="menubar">
+    <span class="menu-item">Applications</span>
+    <span class="menu-item">View</span>
+    <div class="menu-sep"></div>
+    <div class="menu-right"><span id="menu-info">N2 完形填空</span></div>
+  </div>
+  <div class="page" id="page-grammar">
+    <div class="grammar-list-header">
+      <span>語法条目</span><span id="grammar-count"></span>
+    </div>
+    <div class="grammar-list" id="grammar-list-body"></div>
+  </div>
+  <div class="page visible" id="page-quiz">
+    <div class="quiz-content" id="quiz-content"></div>
+    <div class="quiz-nav" id="quiz-nav"></div>
+  </div>
+</div>
+
+<script>
+var GRAMMAR = [
+  { id:"g01", name:"〜でしょう（論説開篇）", tag:"推測/文体", source:"2025.12 Q48",
+    meaning:"论说文开篇用「〜という人も多いでしょう」这个形式，以委婉推测的语气陈述普遍现象，是固定句式。",
+    structure:"普通形＋でしょう",
+    notes:"不要与「とします」（假定推导）混淆。とします是「もし〜だとします」这种中间论证用法，不用于开篇陈述现象。",
+    examples:[{jp:"色使いや盛り方など、料理の見た目がきれいだと食事の楽しみが増すという人も多いでしょう。",zh:"色彩搭配和摆盘等让料理好看的话，应该有很多人会觉得更享受进食吧。"}] },
+  { id:"g02", name:"〜にまで", tag:"取り立て助詞", source:"2025.12 Q50",
+    meaning:"「甚至延伸到……的范围/程度」。标记意外地扩展到某个极限范围的语感。",
+    structure:"名詞＋にまで＋動詞",
+    notes:"与「にのみ」（只对……）、「に限らず」（不限于……）区别。にまで专门强调范围扩展到了极限边界。",
+    examples:[{jp:"目から入る情報は、食べたときの味の感じ方にまで影響していたのです。",zh:"从眼睛获取的信息，甚至影响到了吃东西时对味道的感受方式。"}] },
+  { id:"g03", name:"〜に利用されている（被動）", tag:"受け身", source:"2025.7 Q48",
+    meaning:"「Nに＋Vられる」被动句式，に标记动作发出者，客观陈述谁在使用/受益于某项服务。",
+    structure:"N（対象）に＋Vられる",
+    notes:"不要与「てくれる」（对方为我方做某事）混淆。てくれる需要授受关系和恩惠语感，而这里是客观说明文，没有这层语境。",
+    examples:[{jp:"車の運転が困難な人や、最寄りのバス停や駅まで歩くことが負担になる人に利用されている。",zh:"被驾驶有困难的人，以及步行到最近的公交站或车站有负担的人所使用着。"}] },
+  { id:"g04", name:"〜少なくないという", tag:"語篇逻辑", source:"2025.7 Q49",
+    meaning:"「そのため＋对策」前面需要「问题依然存在」的状态。如果填「少なくなったのだ」（已经减少了），问题已解决，后文的对策就失去了理由，逻辑矛盾。",
+    structure:"普通形＋という（引用/转述语气）",
+    notes:"★核心框架第5条：そのため/だから前的「问题状态」不能是已解决/已减少的状态，否则与后文对策逻辑矛盾。",
+    examples:[{jp:"用事がないから外出しないという高齢者は少なくないという。そのため、商店街での割引を実施したり……",zh:"据说据调查，没有事情所以不外出的老年人为数不少。正因如此，实施了商业街打折等……"}] },
+  { id:"g05", name:"実は", tag:"談話連接", source:"2023.12 Q48",
+    meaning:"揭示表面现象背后的真正原因。「看起来奇怪→実は＋真正原因」是经典用法。",
+    structure:"（表面現象の記述）→ 実は＋（真の原因）",
+    notes:"「一方で」（并列对比）、「しかも」（递进追加）与実は的功能不同——実は専用于揭示原因。",
+    examples:[{jp:"実は、温泉は入り方を間違えると体に負担をかけてしまうのです。",zh:"其实，温泉如果泡法搞错了，反而会给身体造成负担。"}] },
+  { id:"g06", name:"〜ようにしてください", tag:"呼応副詞", source:"2023.12 Q49",
+    meaning:"「必ず」是预告强语气指令/建议的呼应副词。固定组合：必ず→ようにしてください/てください/命令形。",
+    structure:"必ず＋Vようにしてください",
+    notes:"「のでしょう」（推测）、「つもりです」（陈述自己的打算）都与必ず的确定指令语感矛盾，直接排除。",
+    examples:[{jp:"お湯に入る前は必ず「かけ湯」をするようにしてください。",zh:"进入浴池之前，务必要做「冲身」（先用温泉水冲洗身体）。"}] },
+  { id:"g07", name:"〜こともある", tag:"可能性", source:"2023.12 Q50",
+    meaning:"「有这种情况存在（但不绝对）」。ですから前需要「有可能性」的陈述，才能合理引出「视情况而定」的建议。",
+    structure:"Vこともある",
+    notes:"「と思います」（主观推测）不适合说明文的客观陈述。「にあります」是「問題は〜にある」这个句型专用，这里没有对应主语结构，不通顺。",
+    examples:[{jp:"温泉の成分が肌に負担をかけることもあります。ですから、刺激の強い酸性の温泉に入ったときは……",zh:"温泉成分有时也会给皮肤造成负担。所以，当泡了刺激性强的酸性温泉时……"}] },
+  { id:"g08", name:"せっかく〜のに＋てしまっては", tag:"呼応表現", source:"2023.12 Q51",
+    meaning:"「せっかく〜のに」后接「Vてしまっては＋もったいない/困る」固定呼応组合，表达事与愿违的惋惜。",
+    structure:"せっかく〜のに、Vてしまっては＋もったいない",
+    notes:"「疲れてしまったのが」把前面名词化，是已发生的事实陈述，没有假设性惋惜感。「疲れてしまうばかりで」描述持续反复状态，后面通常接递进的负面后果，不会直接接もったいない这种一次性评价。",
+    examples:[{jp:"せっかく疲れをとりに温泉に行ったのに、疲れてしまってはもったいないですよね。",zh:"明明特意去温泉消除疲劳，结果反而累了那真是太可惜了呢。"}] },
+  { id:"g09", name:"〜とされている", tag:"客観評価", source:"2023.7 Q49",
+    meaning:"「被（社会普遍）认为/视为……」，される是する的被动形，加持续态ている，表达持续存在的社会共识/客观评价。",
+    structure:"〜と＋される＋ている",
+    notes:"同组句式：〜と考えられている / 〜と言われている。遇到空格前是「〜と」、需要收尾时优先考虑这组。「しておきます」是事先准备的语感（主动安排），与客观评价状态的语境不符。",
+    examples:[{jp:"人工的に生産できないため、大変貴重なものとされています。",zh:"因为无法人工生产，所以被视为极其珍贵的东西。"}] },
+  { id:"g10", name:"〜てきました（変化蓄積）", tag:"てくる/ていく", source:"2022.12 Q48",
+    meaning:"「てくる」表示从过去某时间点持续到现在，逐渐积累/变化，方向朝当下靠拢。搭配「近年来」等回顾性语境。",
+    structure:"V＋てきた（てきました）",
+    notes:"「ていく」是从现在出发朝未来发展，方向相反。「増えそうでした」是「过去观察到快要发生（但还没发生）」的意思，而报告增多是已成事实，不适合用样态推测。",
+    examples:[{jp:"座りすぎがさまざまな体の不調の原因になるという研究報告も増えてきました。",zh:"关于久坐是各种身体不适原因的研究报告也逐渐多了起来。"}] },
+  { id:"g11", name:"ところが", tag:"逆接", source:"2022.12 Q49 / 2021.12 Q49",
+    meaning:"逆接连词，专门制造「前面是常识性预期→后面是意外反转的真相」的强烈反差。常与実は搭配出现。",
+    structure:"（常识性预期）→ ところが、実は〜",
+    notes:"「というのは」（理由说明）、「したがって」（顺接因果）、「しかも」（递进追加）都没有逆转功能，遇到「预期与现实反转」的语境直接排除这三个。",
+    examples:[{jp:"座っている姿勢は体にあまり負担がかかっていないと思うかもしれません。ところが、実は立っているときの2倍もの負担が腰にかかるのだそうです。",zh:"也许你会觉得坐着的姿势不怎么会给身体造成负担。然而，实际上腰部承受的负担据说竟是站立时的2倍。"}] },
+  { id:"g12", name:"〜である（論説断定）", tag:"文体", source:"2022.7 Q48",
+    meaning:"书面语的客观断定助动词。论说文开篇定义议题时的标准用法，表示确定性陈述，不带推测或转述语气。",
+    structure:"名詞・形容詞語幹＋である",
+    notes:"「だろう」（推测）不适合明确的主题定义。「とのことだ」（转述引用他人说法）不适合作者自己定义本文议题——这是自己在说，不是在引用别人。",
+    examples:[{jp:"今回取り上げるのは、自転車の問題である。",zh:"这次要谈的是自行车（停放）的问题。"}] },
+  { id:"g13", name:"〜するために（目的→手段）", tag:"目的", source:"2022.7 Q51",
+    meaning:"「为了……」，標準的目的→手段逻辑链。前面讲目標，後面緊跟具体手段。",
+    structure:"動詞辞書形＋ために",
+    notes:"「しても」是让步逆接（即使……也……），与目的→手段的顺接关系不符。「なったように」过去时态与「今后的手段说明」面向未来的语境不搭，时态和语义都不通顺。",
+    examples:[{jp:"より快適で安全な街にするために、全自動式の地下駐輪場の設置は有効な手段の一つだといえる。",zh:"为了建成更舒适安全的街道，可以说全自动式地下停车场的设置是有效手段之一。"}] },
+  { id:"g14", name:"そこで（問題→対策）", tag:"談話連接", source:"2021.7 Q49",
+    meaning:"「于是/正因如此（针对这个问题采取行动）」。专用于「面对这个状况，于是（主体）主动做了某件事」的语境。",
+    structure:"（问题状况）→ そこで、（主体主动做某件事）",
+    notes:"そのため偏客观因果（因为这个原因产生了这个结果），そこで偏主动应对（面对这个状况于是……采取行动）。「たとえば」是举例，「ところが」是逆接，都与「问题→主动对策」的顺接关系不符。",
+    examples:[{jp:"そこで政府は、気象データとPOSデータを……",zh:"于是，政府……将气象数据与POS数据……"}] },
+  { id:"g15", name:"〜ようになりたい（状態変化の願望）", tag:"ようになる/ようにする", source:"2020.12 Q51",
+    meaning:"「某种能力或状态从无到有发生变化（ようになる）＋なりたい表愿望」，強調対未来状態変化的期望。",
+    structure:"Vことが＋できるようになりたい",
+    notes:"关键区分：ようにする/ようにしている＝当下主动努力/注意去做某事（行为者控制）。ようになる/ようになりたい＝某种能力或状态从无到有发生变化（强调变化本身）＋なりたい表愿望。",
+    examples:[{jp:"医療分野に貢献できるようになりたいです。",zh:"我希望能（逐渐成长到）为医疗领域做出贡献。"}] },
+  { id:"g16", name:"〜わかれば（条件仮定）", tag:"条件", source:"2019.12 Q49",
+    meaning:"「一旦知道了→就能做到另一件事」的条件假设链。わかれば＝わかるの仮定条件形。",
+    structure:"Vば＋（結果が可能になる）",
+    notes:"「わかるため」是目的用法（为了知道……），这里是条件假设关系，功能不符。「わかったことで」是已然的因果陈述（由于已经知道了……），而这里忠敬是得到了一个新认知，不是已成的事实结果。",
+    examples:[{jp:"それがわかれば正確に直径が計算できると知った忠敬は、蝦夷地へ行くことを願う。",zh:"得知只要搞清楚那个距离就能准确计算出地球直径的忠敬，希望能前往虾夷地（北海道）。"}] },
+  { id:"g17", name:"〜こととなる（正式決定）", tag:"書面語", source:"2019.12 Q51",
+    meaning:"書面語/正式語境，表示「顺应外部情势/决定，最终成为……这种情况」，常用于官方任命、历史叙述。",
+    structure:"Vこととなる",
+    notes:"「こととなる」vs「ことになる」：こととなる更正式，强调顺应外部情势自然发展成的结果，常用于历史叙述和官方决定。「こともある」是习惯性反复发生（有时会……），用在一次性历史事件上不适合。",
+    examples:[{jp:"忠敬は東日本の地図作成も命じられることとなる。",zh:"忠敬（最终）也被命令制作东日本的地图了。"}] },
+  { id:"g18", name:"そのような（回指前文）", tag:"指示詞", source:"2019.7 Q51",
+    meaning:"「那样的/如前文所述的」，回指前文已经解释过的内容，使逻辑链闭合。",
+    structure:"そのような＋名詞",
+    notes:"「ある理由が」（某种理由）暗示理由是新信息，但前文已经解释过了，用「某种」不自然。「どの理由も」（所有理由都……）是全称语气，与「发现了一个特定理由」的语境不符。",
+    examples:[{jp:"そのような理由があったのだと知って、なるほどと思いました。",zh:"得知原来有前文所说的那种理由，我心想：原来如此。"}] },
+  { id:"g19", name:"〜させられました（使役受身）", tag:"使役受身", source:"2019.7 Q52",
+    meaning:"「被（外部事物）自然而然地使得自己不由得……」，强调被外部力量说服/影响，非主动判断。",
+    structure:"Vさせ＋られる（被動）",
+    notes:"「のでしょう」是推测语气，但这是作者自己的亲身感受，不该对自己的感受做推测，人称语用不符。「させてほしかった」是「过去希望被说服」的意思，时态和语义都完全不对。",
+    examples:[{jp:"打ち水の効果は、科学的に説明できるものでした。だから昔から今まで打ち水の文化が続いているのだと納得させられました。",zh:"打水降温的效果是可以用科学解释的。所以从古至今打水文化一直流传下来，这点让我不由得信服了。"}] },
+  { id:"g20", name:"〜というわけだ（段落総括）", tag:"談話収尾", source:"2018.12 Q51",
+    meaning:"以前文所有铺垫为基础，得出顺理成章的结论。「归结起来就是这么回事」。常用于段落总结性收尾。",
+    structure:"（前提的层层铺垫）→ というわけだ",
+    notes:"★位置规律：论说文/说明文段落末尾，前文是一连串推导铺垫时，优先考虑というわけだ。「のだろうか」（疑问推测）与确定性总结矛盾——整段都在解释「能展开」这件事，结尾反变成疑问会很奇怪。",
+    examples:[{jp:"開発された折り方を使えば、宇宙空間に出たときには簡単に広げられるというわけだ。",zh:"也就是说，利用开发出的折叠方式，到了宇宙空间时就可以轻松展开（装置）。"}] },
+  { id:"g21", name:"ご存じだろうか（読者呼びかけ）", tag:"文体", source:"2018.7 Q51",
+    meaning:"論説文の「読者呼唤式開場」。先向读者提问引起注意，后文接着介绍新知识/技术，是说明文开场的固定套路。",
+    structure:"ご存じ＋だろうか",
+    notes:"「ご存じのようだ」断言读者已经知道了，那后面就没必要继续介绍了，与后文的解说逻辑矛盾。",
+    examples:[{jp:"高速道路や大きな道路の多くで雨水が道路上にたまりにくい設計になっていることはご存じだろうか。",zh:"你知道高速公路和很多大型道路都采用了雨水不易积聚在路面的设计吗？"}] },
+  { id:"g22", name:"実は（順接補充）", tag:"談話連接", source:"2017.12 Q50",
+    meaning:"前句讲原则，実は引出「具体佐证/印证」的顺接补充结构，不是逆接反转（ところが）。",
+    structure:"（原則陳述）→ 実は、（具体な裏付け）",
+    notes:"与g05（実は用于逆接揭示原因）的区别：这里的実は是顺接补充（「果然确实如此」），前后不是反转关系而是确认关系。需要靠文脉判断。「ところが」（逆转）「一方」（并列对比）都不适合这里的顺接补充语境。",
+    examples:[{jp:"実は、空を飛ぶ鳥は、体や翼の大きさのわりには、体がとても軽くできているのです。",zh:"其实，会飞的鸟类，相比身体和翅膀的大小，体重做得非常轻。"}] },
+  { id:"g23", name:"こうして見てみると（列举→総括）", tag:"談話収尾", source:"2017.12 Q53",
+    meaning:"「逐一看下来/这样综合来看」，专用于「逐一列举→综合得出结论」的段落结构，段落归纳式收尾。",
+    structure:"こうして見てみると、〜（総括結論）",
+    notes:"「最初に述べたように」是指向文章特定位置（开头）的内容，不是综合归纳全文列举项，功能不符。こうして見てみると专用于「逐一列举完毕→综合得出结论」这种结构。",
+    examples:[{jp:"こうして見てみると、鳥は、単に翼があるから飛べるのではなく、いろいろな点で体全体が飛ぶのに最適な構造になっていることがわかりますね。",zh:"这样综合来看，我们就能明白，鸟能飞并不仅仅是因为有翅膀，而是在各方面整个身体都形成了最适合飞翔的结构。"}] },
+  { id:"g24", name:"さらに（遞進追加）", tag:"談話連接", source:"2017.7 Q52",
+    meaning:"「而且/更进一步」，递进追加同向信息。前後是同向追加不是逆転対比。",
+    structure:"（前の優点）→ さらに、（追加の優点/範囲拡大）",
+    notes:"「とはいえ」（虽说如此……，让步转折）与前后同向递进的关系不符。「このように」（就像这样）通常用于回顾总结前文，不用于追加新信息。",
+    examples:[{jp:"さらに、マスターズの存在が影響を与えるのは、参加者にとどまらない。",zh:"而且，万能运动会的存在所产生的影响，并不仅限于参与者。"}] },
+  { id:"g25", name:"それには（目標→必要条件）", tag:"談話連接", source:"2017.7 Q53",
+    meaning:"「为了实现那件事/要达到那个目的」，固定句型「目標/理想→それには＋必要条件」。",
+    structure:"（理想・目標）→ それには、〜が必要だ",
+    notes:"「それじゃも」是让步语气，与「目标→必要条件」这种顺接逻辑不符合。",
+    examples:[{jp:"それには、マスターズが広く知られる必要がある。",zh:"为了实现这个目标，万能运动会需要广为人知。"}] },
+  { id:"g26", name:"いつまでも〜社会（後文指示名詞化）", tag:"指示詞", source:"2017.7 Q54",
+    meaning:"後文で「その社会」と受ける場合、空格には単純な名詞「社会」が入る。だ/とはを加えると後文の指示詞と接続が断裂。",
+    structure:"修飾語＋社会（名詞のみ）＋。その社会〜",
+    notes:"「社会だ」加了だ变成完整谓语句，后文就无法用「その社会」自然衔接，前后句法结构断裂。「社会とは」是引出定义性解释（说到社会这件事……），与后文用「その社会」指示回指的用法不兼容。",
+    examples:[{jp:"いつまでも心身ともに元気でいられる社会。その社会の実現に向けて、マスターズの今後の発展が期待される。",zh:"一个能让人一直保持身心健康的社会。期待万能运动会的未来发展朝着实现这样的社会迈进。"}] },
+  { id:"g27", name:"〜らしい（証拠的推断・段落総括）", tag:"推断", source:"2016.7 Q52",
+    meaning:"基于前文充分证据/推理得出的合理推断，不是随意猜测。前文已积累大量证据后用らしい总括。",
+    structure:"（証拠・根拠の蓄積）→ 〜らしい",
+    notes:"らしい vs そうだ（传闻）的区别：そうだ是转述别人说的话（据说……），らしい是说话人自己根据客观迹象/前文证据推理出的合理结论。两者信息来源不同。",
+    examples:[{jp:"このようにして「25時」という表現が生まれたらしい。",zh:"据推测，「25时」这种说法就是这样诞生的。"}] },
+  { id:"g28", name:"〜に違いない（強確信）", tag:"推断", source:"2016.12 Q54",
+    meaning:"「无疑是……/一定是……」，表达不带任何保留的强确信断言，是对已实现事实做因果归结。",
+    structure:"名詞・普通形＋に違いない",
+    notes:"「はずだった」带有期待落差的语气（本来应该是这样但实际不确定），而这里是对已实现事实的确信判断，方向不符。「でなければならなかった」是义务/必然性（必须是……），与这里「顺理成章的因果归结」语境完全不符。",
+    examples:[{jp:"あらゆる人にわかりやすくという思いが世界に届いた結果に違いない。",zh:"这无疑是那份「让所有人都能看懂」的心意传达到世界的结果。"}] }
+];
+
+var QUESTIONS = [
+  { id:1, source:"2025.12 Q48", grammarId:"g01",
+    passage:"色使いや盛り方など、料理の見た目がきれいだと食事の楽しみが増すという人も【　】。",
+    answer:"多いでしょう",
+    explanation:"论说文开篇固定句式「〜という人も多いでしょう」，用委婉推测语气陈述普遍现象。「とします」是假定推导的中间论证用法（もし〜だとします），不用于开篇陈述现象，语境不符。" },
+  { id:2, source:"2025.12 Q50", grammarId:"g02",
+    passage:"目から入る情報は、食べたときの味の感じ方【　】影響していたのです。",
+    answer:"にまで",
+    explanation:"「にまで」は「甚至延伸到……的极限范围」の語感。视觉信息的影响超出预期，連味覚まで波及した——これがにまでの核心語感。「にのみ」（限定）は意味が逆になる。" },
+  { id:3, source:"2025.7 Q48", grammarId:"g03",
+    passage:"車の運転が困難な人や、最寄りのバス停や駅まで歩くことが負担になる人に【　】。",
+    answer:"利用されている",
+    explanation:"「Nに＋Vられる」标准被动句式，に标记动作发出者。服务被有困难的人们所使用，是客观陈述。「てくれる」需要「对方为我方做了有恩惠之事」的语感，且需要建立授受关系的语境，这里是说明文客观介绍服务对象，完全没有这层关系。" },
+  { id:4, source:"2025.7 Q49", grammarId:"g04",
+    passage:"用事がないから外出しないという高齢者は【　】。そのため、商店街での割引を実施したり……",
+    answer:"少なくないという",
+    explanation:"そのため后面跟着一连串「促进外出的对策」，要支撑这些对策，前面必须是「问题依然普遍存在」的状态。填「少なくなったのだ」（已经在减少了）则问题已在解决，根本不需要再设计对策，因果链断裂。「という」是引用/转述语气，适合说明文陈述社会现象。" },
+  { id:5, source:"2023.12 Q48", grammarId:"g05",
+    passage:"【　】、温泉は入り方を間違えると体に負担をかけてしまうのです。",
+    answer:"実は",
+    explanation:"前文铺垫了「泡完温泉反而更累」这个表面现象，実は后面接的是「其实是因为泡法搞错了」这个隐藏的真正原因——这是実は最经典的语用功能。「一方で」是并列对比，「しかも」是递进追加，都没有揭示原因的功能。" },
+  { id:6, source:"2023.12 Q49", grammarId:"g06",
+    passage:"お湯に入る前は必ず「かけ湯」を【　】。",
+    answer:"するようにしてください",
+    explanation:"「必ず」是预告强语气指令的呼应副词，固定与ようにしてください/てください/命令形呼应。「のでしょう」（推测）与必ず的确定性指令矛盾。「つもりです」是陈述说话人自己的打算，而这里是对读者发出嘱咐，人称和语用功能都对不上。" },
+  { id:7, source:"2023.12 Q50", grammarId:"g07",
+    passage:"温泉の成分が肌に負担を【　】。ですから、刺激の強い酸性の温泉に入ったときは……",
+    answer:"かけることもあります",
+    explanation:"ですから前面需要「有这种可能性（但不绝对）」的陈述，才能合理引出后面「视情况采取措施」的建议。「Vこともある」正好表达这种语感，与ですから自然衔接。「と思います」是第一人称主观推测，客观说明文里陈述温泉成分的普遍现象不该用主观判断语气。" },
+  { id:8, source:"2023.12 Q51", grammarId:"g08",
+    passage:"せっかく疲れをとりに温泉に行ったのに、【　】もったいないですよね。",
+    answer:"疲れてしまっては",
+    explanation:"「せっかく〜のに」＋「Vてしまっては＋もったいない」是固定呼应组合，表达「事与愿违/白费功夫」的惋惜。是假设条件句（一旦这样就太可惜了），不是陈述已发生的事。「疲れてしまったのが」把前面名词化变成既成事实陈述，没有假设性惋惜感，不符合这个固定搭配。" },
+  { id:9, source:"2023.7 Q49", grammarId:"g09",
+    passage:"人工的に生産できないため、大変貴重なものと【　】。",
+    answer:"されています",
+    explanation:"「〜とされている」是表达「被社会普遍认为/视为……」的固定句式，与〜と考えられている/〜と言われている是同一组。被动形＋ている持续态是标志性结构，表示持续存在的社会共识。「しておきます」是主动事先安排好某事的语感，与客观评价状态的语境不符。" },
+  { id:10, source:"2022.12 Q48", grammarId:"g10",
+    passage:"座りすぎがさまざまな体の不調の原因になるという研究報告も【　】。",
+    answer:"増えてきました",
+    explanation:"「てくる」は過去から現在に向かって積累する変化方向。研究報告の増加は「到现在为止已积累不少」の振り返り語境に合う。「ていく」は現在から未来方向で方向が逆。" },
+  { id:11, source:"2022.12 Q49", grammarId:"g11",
+    passage:"座っている姿勢は体にあまり負担がかかっていないと思うかもしれません。【　】、実は立っているときの2倍もの負担が腰にかかるのだそうです。",
+    answer:"ところが",
+    explanation:"前文铺垫了「坐着不怎么会给身体造成负担」这个常识性预期，后文却是「实际上腰部负担是站立时的2倍」这个意外事实。这种「预期与现实强烈反转」的结构，只有ところが能成立。「というのは」是解释理由（那是因为……），没有反转功能。" },
+  { id:12, source:"2021.12 Q49", grammarId:"g11",
+    passage:"【　】落語を聞いている間、私はよく笑った。落語家の動作や声の出し方は本当に面白くて……",
+    answer:"ところが",
+    explanation:"前文一直在叙述对落语的负面预期（无聊、怕听不懂），后文却是实际听的时候笑个不停、完全听懂了。这种「预期与实际强烈反转」的语境只有ところが能成立。「したがって」（因此，顺接因果）「しかも」（而且，递进追加）都没有逆转功能，直接排除。" },
+  { id:13, source:"2022.7 Q48", grammarId:"g12",
+    passage:"今回取り上げるのは、自転車の【　】。",
+    answer:"問題である",
+    explanation:"论说文开篇定义议题需要书面语的确定断定「である」。「だろう」（推测）不适合明确的主题定义。「とのことだ」是转述别人说法（据说……），但这里是作者自己定义本文议题，不是在引用别人，语用不符。" },
+  { id:14, source:"2022.7 Q51", grammarId:"g13",
+    passage:"より快適で安全な街に【　】、全自動式の地下駐輪場の設置は有効な手段の一つだといえる。",
+    answer:"するために",
+    explanation:"「目标（把街道变得更舒适安全）→するために→手段（地下停车场的设置）」，标准目的→手段逻辑链。「しても」是让步逆接（即使……也……），与这里的顺接关系完全不符。" },
+  { id:15, source:"2021.7 Q49", grammarId:"g14",
+    passage:"需要予測を誤り、過剰に生産してしまうと、それだけ多くの食品ロスが生じてしまう。【　】政府は、気象データとPOSデータを……",
+    answer:"そこで",
+    explanation:"「问题（食品损失）→そこで→政府主动采取对策」。そこで专用于「面对这个状况，于是主体主动做了某件事」的语境。「たとえば」是举例说明，「ところが」是逆接反转，两者与「问题→主动对策」的顺接关系都不符合。" },
+  { id:16, source:"2020.12 Q51", grammarId:"g15",
+    passage:"医療分野に【　】。",
+    answer:"貢献できるようになりたいです",
+    explanation:"「ようになる＋なりたい」は能力・状態が変化することへの願望（从无到有）。「ようにしています」は当下主動努力の語感で、まだ基礎を学んでいる段階の時態と合わない。" },
+  { id:17, source:"2019.12 Q49", grammarId:"g16",
+    passage:"それが【　】正確に直径が計算できると知った忠敬は、蝦夷地へ行くことを願う。",
+    answer:"わかれば",
+    explanation:"「（距离）搞清楚了→就能计算出直径」，这是条件假设链。わかれば是わかる的仮定条件形，表示「一旦这个条件成立→就能实现另一件事」。「わかるため」是目的用法（为了知道……），这里是条件假设关系，功能不符。" },
+  { id:18, source:"2019.12 Q51", grammarId:"g17",
+    passage:"忠敬は東日本の地図作成も【　】。",
+    answer:"命じられることとなる",
+    explanation:"「こととなる」是书面语/正式场面用法，带有「顺应外部情势，最终成为了这种状况」的语感，常用于官方任命和历史叙述，比「ことになる」更正式。「こともある」表示习惯性反复发生（有时会……），用在一次性历史事件上完全不适合。" },
+  { id:19, source:"2019.7 Q51", grammarId:"g18",
+    passage:"【　】あったのだと知って、なるほどと思いました。",
+    answer:"そのような理由が",
+    explanation:"「そのような」は前文で既に説明した「打ち水の科学的原理」を指示回指する。「ある理由が」は「某种理由」で新情報暗示，前文の既知情報への回指に不自然。" },
+  { id:20, source:"2019.7 Q52", grammarId:"g19",
+    passage:"だから昔から今まで打ち水の文化が続いているのだと【　】。",
+    answer:"納得させられました",
+    explanation:"使役被动「させられる」强调「被外部事物自然而然地说服了」，不是主动判断。「のでしょう」是推测语气，但这是作者自己的亲身感受，不该对自己的感受做推测。「させてほしかった」是「过去希望被说服」，时态和语义都完全不对。" },
+  { id:21, source:"2018.12 Q51", grammarId:"g20",
+    passage:"開発された折り方を使えば、宇宙空間に出たときには簡単に【　】。",
+    answer:"広げられるというわけだ",
+    explanation:"段落末尾，前文铺垫了「折叠→发射→展开」的一连串推导。というわけだ是「归结起来就是这么回事」的总括收尾。「のだろうか」（疑问推测）与确定性总结矛盾，整段都在论证「能展开」，结尾反变疑问很奇怪。" },
+  { id:22, source:"2018.7 Q51", grammarId:"g21",
+    passage:"高速道路や大きな道路の多くで雨水が道路上にたまりにくい設計になっていることは【　】。",
+    answer:"ご存じだろうか",
+    explanation:"说明文「向读者发问式开场」的固定套路——先提问引起注意，后文接着介绍新知识/技术原理。「ご存じのようだ」断言读者已经知道了，那后面的介绍就失去意义了，与后文解说逻辑矛盾。" },
+  { id:23, source:"2017.12 Q50", grammarId:"g22",
+    passage:"空を飛ぶためには体が軽いことが大切です。【　】、空を飛ぶ鳥は、体や翼の大きさのわりには、体がとても軽くできているのです。",
+    answer:"実は",
+    explanation:"前句「飛行需要身体轻」という原則の後、実はが「鳥は實際にそうなっている」という具体的裏付けを導く順接補充。「ところが」（逆転）は不適——前後は逆転でなく確認の関係。" },
+  { id:24, source:"2017.12 Q53", grammarId:"g23",
+    passage:"そのほかにも、鳥の体は表面の羽がなめらかで、空気の抵抗を受けにくい形になっています。【　】、鳥は、単に翼があるから飛べるのではなく、いろいろな点で体全体が飛ぶのに最適な構造になっていることがわかりますね。",
+    answer:"こうして見てみると",
+    explanation:"前文逐一列举了鸟的多个身体特征（体轻、翅膀比例、羽毛减阻）后，こうして見てみると综合归纳所有特征得出结论，是段落归纳收尾的固定句式。「最初に述べたように」是指向文章开头特定位置的内容，没有综合归纳全文列举项的功能。" },
+  { id:25, source:"2017.7 Q52", grammarId:"g24",
+    passage:"マスターズに参加する高齢者が増えれば、この理想に近づくことができる。【　】、マスターズの存在が影響を与えるのは、参加者にとどまらない。",
+    answer:"さらに",
+    explanation:"前句「参与者增多→接近理想」，后句「影响不只限于参与者」——后者是在前者基础上追加的同向信息，范围进一步扩大。さらに（递进追加）是唯一适合的。「とはいえ」（虽说如此……）是让步转折，与前后同向递进关系不符。" },
+  { id:26, source:"2017.7 Q53", grammarId:"g25",
+    passage:"体を動かすきっかけや心の活力が得られるに違いない。【　】、マスターズが広く知られる必要がある。",
+    answer:"それには",
+    explanation:"「（理想達成のために）それには必要条件が〜」の固定文型。前文の理想（心身活力のある社会）をそれが指示し、には目標→条件の順接を導く。" },
+  { id:27, source:"2017.7 Q54", grammarId:"g26",
+    passage:"いつまでも心身ともに元気でいられる【　】。その社会の実現に向けて、マスターズの今後の発展が期待される。",
+    answer:"社会",
+    explanation:"后文立刻用「その社会」回指空格填入的名词，所以空格里只能是单纯名词「社会」。「社会だ」加了だ变成完整谓语句，后文就无法用「その社会」自然衔接，结构断裂。「社会とは」是引出定义性解释的句式，与后文指示词用法不兼容。" },
+  { id:28, source:"2016.7 Q52", grammarId:"g27",
+    passage:"このようにして「25時」という表現が【　】。",
+    answer:"生まれたらしい",
+    explanation:"前文详细解释了「25时」这个说法的来龙去脉后，用らしい对这些证据做合理推断总括。らしい是说话人自己根据客观证据推理出的结论，与そうだ（转述他人说法）的信息来源不同。" },
+  { id:29, source:"2016.12 Q54", grammarId:"g28",
+    passage:"あらゆる人にわかりやすくという思いが世界に届いた【　】。",
+    answer:"結果に違いない",
+    explanation:"「に違いない」是基于根据的强确信断言（无疑是……/一定是……）。前文铺垫了图标跨越语言壁障向世界扩展这个已实现的事实，(54)是作者对这个现象给出的因果归结，确信地说「这无疑就是那份心意传达到世界的结果」。「はずだった」带期待落差语气（本来应该……但不确定），与这里的确信判断方向相反。" }
+];
+
+// ══════ DISTRACTOR ENGINE ══════
+function getChoices(q) {
+  var allAnswers = QUESTIONS.map(function(x){ return x.answer; });
+  var pool = allAnswers.filter(function(a){ return a !== q.answer; });
+  // shuffle pool
+  for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=pool[i];pool[i]=pool[j];pool[j]=t;}
+  var distractors = pool.slice(0,3);
+  var choices = [q.answer].concat(distractors);
+  // shuffle choices
+  for(var i=choices.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=choices[i];choices[i]=choices[j];choices[j]=t;}
+  return choices;
+}
+
+// store generated choices per question (so they don't re-shuffle on re-render)
+var choiceCache = {};
+function getChoicesCached(q) {
+  if(!choiceCache[q.id]) choiceCache[q.id] = getChoices(q);
+  return choiceCache[q.id];
+}
+
+// ══════ STATE ══════
+var currentPage='quiz', currentQ=0, answers={}, selectedGrammar=null, quizDone=false;
+
+function switchPage(p) {
+  currentPage=p;
+  document.getElementById('page-grammar').classList.toggle('visible',p==='grammar');
+  document.getElementById('page-quiz').classList.toggle('visible',p==='quiz');
+  document.getElementById('tab-grammar').classList.toggle('active',p==='grammar');
+  document.getElementById('tab-quiz').classList.toggle('active',p==='quiz');
+  document.getElementById('menu-info').textContent=p==='grammar'?'語法一覧':'N2 完形填空';
+  if(p==='grammar') renderGrammarList();
+}
+
+// ══════ GRAMMAR PAGE ══════
+function buildDetailHTML(g) {
+  var exHtml=g.examples.map(function(e){
+    return '<div class="detail-example">'+e.jp+'<br><span style="color:#4a4a6a;">→ '+e.zh+'</span></div>';
+  }).join('');
+  return '<div class="grammar-detail">'+
+    '<div class="detail-title">'+g.name+' <span style="font-size:11px;font-weight:normal;color:#44445a;">'+g.tag+'</span></div>'+
+    '<div class="detail-body"><b>意味：</b>'+g.meaning+'<br><b>接続：</b><span style="font-family:monospace;font-size:12px;">'+g.structure+'</span>'+(g.notes?'<br><b>注意：</b><span style="color:#5a3a0a;">'+g.notes+'</span>':'')+'</div>'+
+    exHtml+
+    '<div class="detail-source" style="margin-top:5px;">出典：'+g.source+'</div>'+
+    '</div>';
+}
+
+function renderGrammarList() {
+  document.getElementById('grammar-count').textContent=GRAMMAR.length+'件';
+  var body=document.getElementById('grammar-list-body');
+  body.innerHTML='';
+  GRAMMAR.forEach(function(g){
+    var wrap=document.createElement('div');
+    var row=document.createElement('div');
+    row.className='grammar-row'+(selectedGrammar===g.id?' selected':'');
+    row.onclick=function(){selectGrammar(g.id);};
+    row.innerHTML='<div class="grammar-icon">文</div><div class="grammar-name">'+g.name+'</div><div class="grammar-tag">'+g.tag+'</div>';
+    wrap.appendChild(row);
+    if(selectedGrammar===g.id){
+      var det=document.createElement('div');
+      det.innerHTML=buildDetailHTML(g);
+      wrap.appendChild(det.firstChild);
+    }
+    body.appendChild(wrap);
+  });
+}
+
+function selectGrammar(id) {
+  selectedGrammar = (selectedGrammar===id) ? null : id;
+  renderGrammarList();
+  if(selectedGrammar){
+    // scroll the opened row into view
+    var body=document.getElementById('grammar-list-body');
+    var rows=body.querySelectorAll('.grammar-row.selected');
+    if(rows[0]) setTimeout(function(){ rows[0].scrollIntoView({block:'nearest',behavior:'smooth'}); },50);
+  }
+}
+
+// ══════ QUIZ PAGE ══════
+function renderQuiz() {
+  if(quizDone){renderScore();return;}
+  var q=QUESTIONS[currentQ];
+  var choices=getChoicesCached(q);
+  var answerIdx=choices.indexOf(q.answer);
+  var answered=answers[q.id]!==undefined;
+  var userIdx=answers[q.id];
+  var correct=userIdx===answerIdx;
+
+  var blankDisplay=answered?(correct?q.answer:q.answer):'　　　';
+  var blankCls='blank-slot'+(answered?(correct?' answered-correct':' answered-wrong'):'');
+  var passageHtml=q.passage.replace('【　】','<span class="'+blankCls+'">'+blankDisplay+'</span>');
+  if(answered&&!correct){
+    passageHtml=q.passage.replace('【　】','<span class="blank-slot answered-wrong">'+choices[userIdx]+'</span>');
+  }
+
+  var labels=['A','B','C','D'];
+  var choicesHtml='<div class="choices-grid">';
+  choices.forEach(function(c,i){
+    var cls='choice-btn'+(answered?' disabled':'');
+    if(answered){if(i===answerIdx)cls+=' correct';else if(i===userIdx)cls+=' wrong';}
+    var oc=answered?'':'onclick="submitAnswer('+i+')"';
+    choicesHtml+='<button class="'+cls+'" '+oc+'><span class="choice-label">'+labels[i]+'.</span> '+c+'</button>';
+  });
+  choicesHtml+='</div>';
+
+  var g=GRAMMAR.find(function(x){return x.id===q.grammarId;});
+  var feedbackHtml='';
+  if(answered){
+    var fbClass=correct?'feedback-correct':'feedback-wrong';
+    var fbIcon=correct?'✓ 正解！':'✗ 不正解';
+    feedbackHtml='<div class="feedback-box visible '+fbClass+'">'+
+      '<div class="feedback-header">'+fbIcon+'</div>'+
+      '<div class="feedback-grammar-name">'+(g?g.name:'')+' — '+(g?g.tag:'')+'</div>'+
+      '<div class="feedback-explanation">'+q.explanation+'</div>'+
+      '<button class="feedback-grammar-link" onclick="goToGrammar(\''+q.grammarId+'\')">→ 語法ページで確認</button>'+
+      '</div>';
+  }
+
+  var pct=Math.round((currentQ/QUESTIONS.length)*100);
+  var content=document.getElementById('quiz-content');
+  content.innerHTML=
+    '<div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width:'+pct+'%"></div></div>'+
+    '<div class="quiz-meta"><span>問題 '+(currentQ+1)+' / '+QUESTIONS.length+'</span><span>正解: '+countCorrect()+'</span></div>'+
+    '<div class="quiz-source">出典：'+q.source+'</div>'+
+    '<div class="quiz-passage">'+passageHtml+'</div>'+
+    choicesHtml+feedbackHtml;
+  content.scrollTop=0;
+
+  var nav=document.getElementById('quiz-nav');
+  nav.innerHTML='';
+  if(currentQ>0){var pb=document.createElement('button');pb.className='nav-btn';pb.textContent='◀ 前へ';pb.onclick=function(){currentQ--;renderQuiz();};nav.appendChild(pb);}
+  var sp=document.createElement('span');sp.style.flex='1';nav.appendChild(sp);
+  if(answered){
+    if(currentQ<QUESTIONS.length-1){var nb=document.createElement('button');nb.className='nav-btn primary';nb.textContent='次へ ▶';nb.onclick=function(){currentQ++;renderQuiz();};nav.appendChild(nb);}
+    else{var db=document.createElement('button');db.className='nav-btn primary';db.textContent='結果を見る';db.onclick=function(){quizDone=true;renderScore();};nav.appendChild(db);}
+  }
+}
+
+function submitAnswer(idx){
+  var q=QUESTIONS[currentQ];answers[q.id]=idx;renderQuiz();
+  document.getElementById('quiz-content').scrollTop=0;
+}
+
+function countCorrect(){
+  var n=0;
+  QUESTIONS.forEach(function(q){
+    var choices=getChoicesCached(q);
+    var ansIdx=choices.indexOf(q.answer);
+    if(answers[q.id]===ansIdx)n++;
+  });
+  return n;
+}
+
+function renderScore(){
+  var correct=countCorrect(),total=QUESTIONS.length,pct=Math.round(correct/total*100);
+  var missHtml='';
+  QUESTIONS.forEach(function(q){
+    var choices=getChoicesCached(q);
+    var ansIdx=choices.indexOf(q.answer);
+    if(answers[q.id]!==ansIdx){
+      var g=GRAMMAR.find(function(x){return x.id===q.grammarId;});
+      missHtml+='<div class="score-miss-item">'+
+        '<span>'+q.source+'：正解「'+q.answer+'」</span>'+
+        '<span class="score-miss-link" onclick="goToGrammar(\''+q.grammarId+'\')">'+(g?g.name:'')+'→</span>'+
+        '</div>';
+    }
+  });
+  var content=document.getElementById('quiz-content');
+  content.innerHTML='<div class="score-screen">'+
+    '<div class="score-title">── 結果 ──</div>'+
+    '<div class="score-number">'+correct+' / '+total+'</div>'+
+    '<div class="score-detail">'+pct+'% 正解率</div>'+
+    (missHtml?'<div class="score-miss-list"><div style="font-size:10px;font-weight:bold;color:#2a2a3a;margin-bottom:4px;">間違えた問題：</div>'+missHtml+'</div>':'<div style="font-size:13px;color:#1a3a1a;font-weight:bold;">全問正解！</div>')+
+    '</div>';
+  var nav=document.getElementById('quiz-nav');nav.innerHTML='';
+  var rb=document.createElement('button');rb.className='nav-btn primary';rb.style.flex='1';rb.textContent='もう一度';
+  rb.onclick=function(){answers={};choiceCache={};currentQ=0;quizDone=false;renderQuiz();};nav.appendChild(rb);
+}
+
+function goToGrammar(id){
+  selectedGrammar=id;
+  switchPage('grammar');
+  renderGrammarList();
+  setTimeout(function(){
+    var body=document.getElementById('grammar-list-body');
+    var sel=body.querySelector('.grammar-row.selected');
+    if(sel) sel.scrollIntoView({block:'nearest',behavior:'smooth'});
+  },50);
+}
+
+renderQuiz();renderGrammarList();
+</script>
+</body>
+</html>
