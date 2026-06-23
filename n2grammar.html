@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="N2語法">
+<meta name="theme-color" content="#54565a">
+<title>N2 語法</title>
+<style>
+:root{
+  --silver:#d6d8da;--silver-d:#9a9da1;--silver-l:#ffffff;
+  --bar-top:#6a6d72;--bar-bot:#3d3f43;
+  --ink:#1a1a1a;--sub:#5b5e63;
+  --face:"Hiragino Sans","Noto Sans CJK JP","Microsoft YaHei",sans-serif;
+  --mono:"Courier New",ui-monospace,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:#7d8488;font-family:var(--face);color:var(--ink);}
+.win{max-width:700px;margin:0 auto;min-height:100vh;background:var(--silver);
+  border-left:2px solid var(--silver-l);border-top:2px solid var(--silver-l);
+  border-right:2px solid var(--silver-d);border-bottom:2px solid var(--silver-d);}
+.titlebar{background:linear-gradient(180deg,var(--bar-top) 0%,#54565a 48%,var(--bar-bot) 100%);
+  color:#fff;font-family:var(--mono);font-weight:bold;font-size:15px;
+  padding:7px 11px;padding-top:calc(7px + env(safe-area-inset-top));
+  display:flex;align-items:center;gap:8px;
+  position:sticky;top:0;z-index:5;text-shadow:0 1px 1px rgba(0,0,0,.45);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -1px 0 rgba(0,0,0,.3);}
+.titlebar .dot{width:13px;height:13px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff 0%,#cfd2d6 40%,#8b8e92 100%);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.8),0 1px 1px rgba(0,0,0,.35);}
+.bar{padding:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+  position:sticky;top:calc(32px + env(safe-area-inset-top));z-index:4;margin-top:-1px;
+  background:rgba(245,246,248,.08);
+  border-top:1px solid rgba(255,255,255,.6);border-bottom:1px solid rgba(150,150,150,.22);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.8),inset 0 -6px 10px -6px rgba(255,255,255,.35),0 2px 6px rgba(0,0,0,.05);}
+.bar::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  -webkit-backdrop-filter:blur(3px) saturate(140%);backdrop-filter:blur(3px) saturate(140%);filter:url(#glassWarp);}
+.btn{position:relative;font-family:var(--face);font-size:13px;font-weight:bold;
+  padding:6px 15px;cursor:pointer;color:#3a3a3a;
+  border:1px solid #a9acb0;border-radius:999px;
+  background:linear-gradient(180deg,#fff 0%,#f1f2f4 48%,#e2e4e6 50%,#eef0f2 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 1px 2px rgba(0,0,0,.18);overflow:hidden;}
+.btn::before{content:"";position:absolute;left:8%;right:8%;top:1px;height:42%;
+  border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,0));pointer-events:none;}
+.btn:active{background:linear-gradient(180deg,#dfe1e3,#eef0f2);box-shadow:inset 0 1px 3px rgba(0,0,0,.22);}
+.btn.on{color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.35);border-color:#6f7276;
+  background:linear-gradient(180deg,#9a9da1 0%,#7c7f83 48%,#5e6165 50%,#6f7276 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 1px 2px rgba(0,0,0,.25);}
+.btn.on::before{background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0));}
+
+/* 语法区 */
+.sheet{padding:8px 10px 40px;}
+.g-card{background:linear-gradient(180deg,#fff,#f4f5f6);margin:6px 0;
+  border:1px solid #c3c6c9;border-radius:7px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 1px 2px rgba(0,0,0,.07);overflow:hidden;}
+.g-card-head{padding:11px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
+.g-title{font-size:18px;font-weight:700;letter-spacing:.5px;color:#1a1a1a;flex-shrink:0;}
+.g-meaning{font-size:12px;color:#5b5e63;flex:1;text-align:right;line-height:1.4;}
+.g-chevron{font-size:11px;color:#9a9da1;margin-left:4px;transition:transform .2s;flex-shrink:0;}
+.g-card.open .g-chevron{transform:rotate(90deg);}
+.g-body{display:none;padding:0 14px 14px;border-top:1px solid #dde0e3;}
+.g-card.open .g-body{display:block;}
+.g-card.highlight{box-shadow:0 0 0 2px #4a7fc1,0 2px 8px rgba(74,127,193,.4);}
+.g-section{margin-top:10px;}
+.g-label{font-family:var(--mono);font-size:11px;font-weight:bold;color:#7c7f83;letter-spacing:.5px;margin-bottom:4px;}
+.g-ex{background:linear-gradient(180deg,#f7f8f9,#eff0f1);border:1px solid #d8dadc;border-radius:5px;
+  padding:9px 11px;margin:4px 0;}
+.g-ex .jp{font-size:15px;color:#1a1a1a;margin-bottom:3px;line-height:1.6;}
+.g-ex .zh{font-size:13px;color:#5b5e63;}
+.g-note{background:linear-gradient(180deg,#fffbe8,#fff5cc);border:1px solid #e8d87a;border-radius:5px;
+  padding:8px 11px;margin:4px 0;font-size:13px;color:#4a4000;line-height:1.6;}
+.g-compare{background:linear-gradient(180deg,#f0f4ff,#e8eeff);border:1px solid #b8c8f0;border-radius:5px;
+  padding:8px 11px;margin:4px 0;font-size:13px;color:#1e2d5a;line-height:1.7;}
+
+/* 测试区 */
+.quiz{display:none;padding:14px 10px 40px;}
+.quiz.active{display:block;}
+.q-score{font-family:var(--mono);font-size:13px;color:#3d3f43;margin-bottom:10px;}
+.q-prompt{font-size:13px;color:#3d3f43;margin-bottom:6px;font-family:var(--mono);}
+.q-sentence{background:linear-gradient(180deg,#fff,#eef0f1);padding:18px 16px;
+  border:1px solid #c3c6c9;border-radius:8px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 1px 3px rgba(0,0,0,.08);margin-bottom:16px;}
+.q-jp{font-size:18px;font-weight:600;line-height:1.8;color:#1a1a1a;margin-bottom:6px;}
+.q-blank{display:inline-block;min-width:80px;height:1.4em;
+  border-bottom:2px solid #3d3f43;
+  background:rgba(0,0,0,.04);border-radius:2px 2px 0 0;
+  vertical-align:bottom;padding:0 4px;}
+.q-zh{font-size:13px;color:#7c7f83;line-height:1.5;}
+.opt{display:block;width:100%;text-align:left;font-size:16px;font-family:var(--face);
+  padding:12px 16px;margin:8px 0;color:#1a1a1a;cursor:pointer;
+  border:1px solid #c3c6c9;border-radius:7px;
+  background:linear-gradient(180deg,#fff 0%,#f2f3f4 55%,#e7e8ea 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 1px 2px rgba(0,0,0,.08);}
+.opt:active{background:linear-gradient(180deg,#e2e3e5,#eef0f1);box-shadow:inset 0 1px 3px rgba(0,0,0,.2);}
+.opt.right{color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.3);border-color:#1c7a44;
+  background:linear-gradient(180deg,#36a55f 0%,#1f8a4c 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 1px 2px rgba(0,0,0,.2);}
+.opt.wrong{color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.3);border-color:#8f2424;
+  background:linear-gradient(180deg,#c44141 0%,#a82c2c 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 1px 2px rgba(0,0,0,.2);}
+.opt.locked{pointer-events:none;}
+.q-feedback{margin-top:12px;padding:10px 13px;border-radius:6px;font-size:13px;line-height:1.7;
+  background:linear-gradient(180deg,#fff5cc,#ffe8a0);border:1px solid #d4b800;color:#3a2e00;}
+.q-feedback a{color:#1a5fcc;text-decoration:underline;cursor:pointer;}
+.next-btn{margin-top:14px;}
+.hint{font-family:var(--mono);font-size:12px;color:#555;padding:8px 10px;
+  background:linear-gradient(180deg,#dcdee0,#cdd0d3);border-top:1px solid var(--silver-d);}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="glassWarp" x="-20%" y="-20%" width="140%" height="140%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.012 0.018" numOctaves="2" seed="7" result="noise"/>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="9" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+<div class="win">
+  <div class="titlebar"><span class="dot"></span>N2 語法 — memeku9.exe</div>
+  <div class="bar">
+    <button class="btn on" id="listBtn">語法一覧</button>
+    <button class="btn" id="quizBtn">テスト</button>
+  </div>
+  <div class="sheet" id="sheet"></div>
+  <div class="quiz" id="quiz"></div>
+  <div class="hint">点条目展开详细说明 · 做错题会跳回对应语法</div>
+</div>
+<script>
+// key = 例句里实际要挖空的词；没有key的例句不进题库
+var DATA = [
+  {id:'niatatte', title:'にあたって', meaning:'在……之际，强调重要时机节点',
+   examples:[{jp:'卒業するにあたって、お世話になった先生に手紙を書いた。', zh:'在毕业之际，给照顾过自己的老师写了信。', key:'にあたって'}],
+   notes:['前件是重要的正式行动（建设、开业、毕业、开始新项目），后件是为此采取的配套措施。'], compare:[]},
+
+  {id:'tosuruto', title:'とすると', meaning:'假设……的话，条件假设，前后是逻辑推论',
+   examples:[{jp:'彼が来ないとすると、会議は成立しない。', zh:'假设他不来的话，会议就开不成。', key:'とすると'}],
+   notes:['前件是「尚未确定/纯假设」的事，后件是由此推出的结论。','排除信号：前件已是决定好的事实 → 直接排除とすると。'], compare:[]},
+
+  {id:'mononara', title:'ものなら', meaning:'如果能……的话（言外：几乎不可能），反事实/挑战语气',
+   examples:[{jp:'できるものなら、やってみろ。', zh:'你要是能做到的话，来试试看啊。', key:'ものなら'}],
+   notes:['说话人认为某件事极难实现，用来表达挑战或反事实愿望。'], compare:[]},
+
+  {id:'wariniwa', title:'わりには', meaning:'虽然……但是……，结果与预期不符（含主观惊讶）',
+   examples:[{jp:'値段が高いわりには、おいしくない。', zh:'价格挺贵，但味道不怎么样。', key:'わりには'}],
+   notes:['前件设定一个预期，后件的结果与该预期相反或不符。说话人有预期，结果让人意外。'],
+   compare:[{label:'わりには vs ながらも', text:'わりには → 说话人有预期，结果意外（含主观惊讶）。ながらも → 客观陈述两件事的反差，语气中性。'}]},
+
+  {id:'nagaramo', title:'ながらも', meaning:'虽然……但是……，客观反差，语气平稳中性',
+   examples:[{jp:'狭いながらも、居心地のいい部屋だ。', zh:'虽然房间小，但住起来很舒适。', key:'ながらも'}],
+   notes:['前件是某种客观身份/状态，后件是与之形成反差的成就或事实。语气比わりには更平稳，不含惊讶感。'], compare:[]},
+
+  {id:'koso', title:'こそ', meaning:'正是……，强调某个理由或对象',
+   examples:[{jp:'努力してきたからこそ、合格できた。', zh:'正是因为努力了，才能合格。', key:'こそ'}],
+   notes:['强调「正是这个原因/正是这个人/正是这件事」，前后是因果强调关系。','排除信号：句子是反差逻辑（虽然……但……）→ こそ不适用。'], compare:[]},
+
+  {id:'sura', title:'すら', meaning:'连……都……，强调极端程度，通常用于负面极端情况',
+   examples:[{jp:'疲れすぎて、立つことすらできない。', zh:'累到连站起来都做不到。', key:'すら'}],
+   notes:['举出一个极端的低标准，暗示「连这个都……」，语感偏负面/轻蔑。','排除信号：夸奖/正面语境 → すら不适用。'],
+   compare:[{label:'すら vs さえ', text:'すら → 语感偏负面、轻蔑。さえ → 举出极端低的基准，语气更中性。'}]},
+
+  {id:'dokoroka', title:'どころか', meaning:'哪里只是……，根本是……，程度远超预期的递进',
+   examples:[{jp:'風邪どころか、肺炎だった。', zh:'哪里是感冒，根本是肺炎。', key:'どころか'}],
+   notes:['前后必须是同类事物的程度递进，后件是对前件的否定升级。','排除信号：前后不是同类事物 → どころか不适用。'], compare:[]},
+
+  {id:'ittai', title:'いったい', meaning:'到底/究竟，加强疑问语气',
+   examples:[{jp:'いったい何が起きたのか。', zh:'到底发生了什么？', key:'いったい'}],
+   notes:['必须配合疑问句使用，表达说话人的困惑或追问。','排除信号：句尾不是疑问句 → いったい不适用。'], compare:[]},
+
+  {id:'osoraku', title:'おそらく', meaning:'大概/恐怕，表示说话人的推测',
+   examples:[{jp:'おそらく明日も雨だろう。', zh:'大概明天也会下雨吧。', key:'おそらく'}],
+   notes:['说话人对某件事不确定，给出主观推测，常与だろう/と思う搭配。','排除信号：句子是提问而非推测 → おそらく不适用。'], compare:[]},
+
+  {id:'kaette', title:'かえって', meaning:'反而/反倒，结果与预期相反',
+   examples:[{jp:'薬を飲んだら、かえって悪化した。', zh:'吃了药，反而更严重了。', key:'かえって'}],
+   notes:['前件有明确的预期（应该会好），后件结果与预期相反。','排除信号：句子没有「预期」前提 → かえって无从「反」起，排除。'], compare:[]},
+
+  {id:'doushitemo', title:'どうしても', meaning:'无论如何/怎么也……，强烈意志或无法避免',
+   examples:[{jp:'どうしても諦められない。', zh:'怎么也无法放弃。', key:'どうしても'}],
+   notes:['①强烈意志「无论如何都要做」；②无法避免「怎么也……不了」。'], compare:[]},
+
+  {id:'kotogaaru', title:'ことがある', meaning:'有时会……，某种情况偶尔存在或发生',
+   examples:[{jp:'朝、電車が遅れることがある。', zh:'早上电车有时会晚点。', key:'ことがある'}],
+   notes:['陈述某件事有发生的可能性，不是100%必然。'],
+   compare:[{label:'ことがある vs ことにしている', text:'ことがある → 偶尔发生，不固定。ことにしている → 固定习惯，每次都这样。'}]},
+
+  {id:'kotonisuру', title:'ことにする / ことにしている', meaning:'ことにする：决定做……（一次性）　ことにしている：固定习惯',
+   examples:[
+     {jp:'毎日運動することにした。', zh:'决定每天运动。', key:'ことにした'},
+     {jp:'毎朝ジョギングすることにしている。', zh:'每天早上慢跑（是我的习惯）。', key:'ことにしている'}],
+   notes:['ことにする → 主动一次性决定。ことにしている → 持续性的固定习惯，每次都这样。','排除信号：句子是解释原因/陈述事实，没有「主动决定」含义 → 排除ことにする。'], compare:[]},
+
+  {id:'tamehazu', title:'ためです vs はずです', meaning:'ためです：是因为……（解释原因）　はずです：应该是……（有根据的推测）',
+   examples:[
+     {jp:'遅刻したのは、電車が止まったためです。', zh:'迟到是因为电车停了。', key:'ためです'},
+     {jp:'この薬は3日飲めば効くはずです。', zh:'这个药吃三天应该会见效。', key:'はずです'}],
+   notes:['ためです：对答案确定，在告知原因，语体较正式书面。はずです：有根据但不100%确定。','んです ≈ ためです，但んです更口语；正式场合（医生讲解、报告）→ 优先ためです。'], compare:[]},
+
+  {id:'sae', title:'さえ', meaning:'连……都……，强调极端的最低限度',
+   examples:[{jp:'緊張して、自分の名前さえ言えなかった。', zh:'紧张到连自己的名字都说不出来。', key:'さえ'}],
+   notes:['举出一个极端低的基准，强调连这么基本的事都……'],
+   compare:[{label:'さえ vs ほど', text:'さえ → 连X都做不到（X是极端低的基准）。ほど → 怕/累/悲伤到X的程度（X是程度的描述）。'}]},
+
+  {id:'hodo', title:'ほど', meaning:'到……的程度，强调程度之深',
+   examples:[{jp:'泣きたいほど悲しかった。', zh:'悲伤到想哭的程度。', key:'ほど'}],
+   notes:['ほど前面接「程度的描述」——形容词、动词て形、动词たい形。','排除信号：ほど前面是名词化动作（～こと）而不是程度描述 → 结构不成立，考虑さえ。'], compare:[]},
+
+  {id:'mazu_nai', title:'まず～ない', meaning:'几乎不可能/基本不会……，强烈否定（区分：まず首先）',
+   examples:[
+     {jp:'まず無理だろう。', zh:'基本上不可能吧。', key:'まず'},
+     {jp:'そんなことはまずないだろう。', zh:'那种事基本上不会发生。', key:'まず'}],
+   notes:['まず单独 = 首先/第一步。まず＋否定 = 几乎不……。不要混淆！','说话人判断某件事几乎不可能发生，语气是强烈的客观否定。'], compare:[]},
+
+  {id:'tsui', title:'つい', meaning:'不由得/不知不觉/不小心，无意识做了某事',
+   examples:[{jp:'つい食べすぎてしまった。', zh:'不知不觉吃多了。', key:'つい'}],
+   notes:['说话人无意识地做了某个行为，通常带有轻微懊悔感，常与てしまう搭配。'], compare:[]},
+
+  {id:'tatoe', title:'たとえ～ても', meaning:'即使/哪怕……，让步假设',
+   examples:[{jp:'たとえ雨でも行く。', zh:'即使下雨也要去。', key:'たとえ'}],
+   notes:['たとえ后面必须配ても/でも，缺少ても直接排除。'], compare:[]},
+
+  {id:'imani', title:'今に', meaning:'马上就会/迟早会……，预测即将或迟早发生',
+   examples:[{jp:'今に後悔するよ。', zh:'你迟早会后悔的。', key:'今に'}],
+   notes:['说话人预测某件事迟早/很快会发生，通常带有一定把握感。'], compare:[]},
+
+  {id:'dakaratolte', title:'だからといって', meaning:'虽说……但……，承认理由存在但否定由此得出的结论',
+   examples:[
+     {jp:'子どもだからといって、何をしてもいいわけではない。', zh:'虽说是孩子，但不代表什么都可以做。', key:'だからといって'},
+     {jp:'休みの日だからといって、昼過ぎまで寝ているのはよくない。', zh:'虽说是休息日，但睡到下午还是不太好。', key:'だからといって'}],
+   notes:['前件是一个看似合理的理由，后件否定「因此就可以……」的逻辑。'], compare:[]},
+
+  {id:'nishitewa', title:'にしては', meaning:'就……来说……，以某个标准衡量，结果出乎意料',
+   examples:[{jp:'子どもにしては、字がうまい。', zh:'就孩子来说，字写得挺好的。', key:'にしては'}],
+   notes:['后件必须是超出该标准预期的结果，正方向或负方向均可，但一定有「意外」感。'], compare:[]},
+
+  {id:'dekizuiru', title:'できずにいる', meaning:'一直处于无法做到的状态，持续无法实现',
+   examples:[{jp:'言いたいことがあるのに、なかなか言い出せずにいる。', zh:'有想说的话，却一直说不出口。', key:'ずにいる'}],
+   notes:['前面几乎必有「なかなか」，表示「怎么也……不了」的持续状态。'], compare:[]},
+
+  {id:'sounatta', title:'そうになった vs するところだった', meaning:'そうになった：差点……（当场危险感）　するところだった：差点……（事后回想「好险」）',
+   examples:[
+     {jp:'転びそうになった。', zh:'差点摔倒。（当时感受到危险）', key:'そうになった'},
+     {jp:'大事な書類を洗濯してしまうところだった。', zh:'差点把重要文件洗掉了。（事后发现好险）', key:'ところだった'}],
+   notes:[],
+   compare:[{label:'対比', text:'そうになった → 强调当时的危险状态，当场感受。するところだった → 事后回想「好险」，通常是坏事险些发生。'}]},
+
+  {id:'tatokoroda', title:'たところだ', meaning:'刚刚做完了……，动作刚完成',
+   examples:[
+     {jp:'今来たところだ。', zh:'刚到。', key:'たところだ'},
+     {jp:'食事が終わったところだ。', zh:'刚吃完饭。', key:'たところだ'}],
+   notes:['注意和そうになった/するところだった完全不同，たところだ是「已完成」不是「险些发生」。'], compare:[]},
+
+  {id:'sonouchi', title:'そのうち', meaning:'总有一天/不久之后，将来自然而然会发生',
+   examples:[{jp:'使っていればそのうち慣れるよ。', zh:'用着用着总会习惯的。', key:'そのうち'}],
+   notes:[],
+   compare:[{label:'时间副词四组对比', text:'いまにも → 眼看就要（极度紧迫，即将发生）。そのうち → 总有一天（从容，将来自然发生）。ようやく → 终于/好不容易（已发生，经历等待后实现）。いつのまに → 不知不觉（已发生，回头发现的感叹）。'}]},
+
+  {id:'dakewa', title:'だけは', meaning:'能做的都做了/尽力了，在能力范围内已尽全力',
+   examples:[
+     {jp:'言うだけは言った。', zh:'该说的都说了。', key:'だけは'},
+     {jp:'難しかったけど、書くだけは書いたよ。', zh:'虽然难，但能写的都写了。', key:'だけは'}],
+   notes:['前件承认困难，后件用だけは表示「尽力了」，结果不一定好但我努力了。'],
+   compare:[{label:'だけは vs だけでは vs だけなら', text:'だけは → 能做的都做了（尽力感）。だけでは → 仅此不够（后件否定）。だけなら → 仅此条件下谁都能（后件正面但暗示不够）。'}]},
+
+  {id:'nitomonatte', title:'にともなって', meaning:'随着……，两件事同步变化，前件带动后件',
+   examples:[
+     {jp:'経済の発展にともなって、生活水準が上がった。', zh:'随着经济发展，生活水平提高了。', key:'にともなって'},
+     {jp:'情報技術の発展にともなって、コミュニケーションの手段は多様化している。', zh:'随着信息技术发展，交流手段也在多样化。', key:'にともなって'}],
+   notes:['排除信号：において（在某方面），にこたえて（响应需求），にあたって（在某时机之际）→ 这三个都不表示同步变化。'], compare:[]},
+
+  {id:'uchini', title:'うちに / うちなら', meaning:'趁……还……/在……期间，趁某个状态还存在时赶紧行动',
+   examples:[
+     {jp:'若いうちに、いろんな経験をしておくといい。', zh:'趁年轻，多积累各种经验。', key:'うちに'},
+     {jp:'虫歯が小さいうちなら、簡単な治療で済みます。', zh:'趁蛀牙还小的现在，简单治疗就能解决。', key:'うちなら'}],
+   notes:['前件是一个会随时间消失的状态（年轻、蛀牙小、机会还在），提醒趁现在行动。'], compare:[]},
+
+  {id:'surukotowanai', title:'することはない', meaning:'没必要做……，直接否定某行为的必要性',
+   examples:[
+     {jp:'そんなに慌てることはない。', zh:'没必要那么慌张。', key:'ことはない'},
+     {jp:'すぐに止まるなら心配することはない。', zh:'如果很快就停，不用担心。', key:'ことはない'}],
+   notes:['语气肯定直接，比しなくていい更强调「根本没必要」。'],
+   compare:[{label:'对比', text:'しなければならない → 必须做。しないでもない → 也不是不做（有一点）。するわけではない → 并不是说要做（辩解）。することはない → 没必要做。'}]},
+
+  {id:'mitaihazu', title:'みたいだ vs はずだ', meaning:'みたいだ：好像/似乎（外部迹象，确信度低）　はずだ：应该是……（逻辑推理，确信度高）',
+   examples:[
+     {jp:'ガイドブックに書いてあるみたいだ。', zh:'好像手册上写着（从外部信息得知）。', key:'みたいだ'},
+     {jp:'電車はもう来たはずだ。', zh:'电车应该已经来了（基于逻辑推断）。', key:'はずだ'}],
+   notes:['说话人从外部信息（手册、别人说的）得知 → みたいだ。说话人基于自己的逻辑推断 → はずだ。'], compare:[]},
+
+  {id:'morauageru', title:'もらう / あげる / くれる（授受动词）', meaning:'方向：利益流向谁决定用哪个',
+   examples:[
+     {jp:'先生に書いてもらった。', zh:'请老师帮我写了。（利益流向我）', key:'もらった'},
+     {jp:'友達に本を貸してあげた。', zh:'借给朋友书了。（利益流向朋友）', key:'あげた'},
+     {jp:'彼が手伝ってくれた。', zh:'他主动帮了我。（对方主动给我好处）', key:'くれた'}],
+   notes:[],
+   compare:[{label:'授受方向', text:'てもらう → 利益流向说话人，受恩者视角（对方做，我获益）。てあげる → 利益流向对方，施恩者视角（我做，对方受益）。てくれる → 对方主动给我好处，受恩者视角（对方主动）。'}]},
+
+  {id:'dorehodo', title:'どれほど vs どんなに', meaning:'どれほど：到底有多少/多……（后接疑问句）　どんなに：不管多么……（后接ても）',
+   examples:[
+     {jp:'どれほどの人がこの問題を知っているだろうか。', zh:'到底有多少人知道这个问题呢？', key:'どれほど'},
+     {jp:'どんなに疲れても、諦めない。', zh:'不管多累也不放弃。', key:'どんなに'}],
+   notes:['どれほど → 后面必须配疑问句（～だろうか/～のか）。','どんなに → 后面必须配ても/でも，缺少ても直接排除。'], compare:[]},
+
+  {id:'noareba', title:'のであれば vs であって', meaning:'のであれば：如果是（你说的）这个情况的话（条件判断）　であって：虽然是……但……（让步并列）',
+   examples:[
+     {jp:'海水が入ったのであれば、修理は難しいかもしれません。', zh:'如果是进了海水的情况，修理可能有些难。', key:'のであれば'},
+     {jp:'冗談であって、本気ではない。', zh:'只是开玩笑，不是认真的。', key:'であって'}],
+   notes:['「の」→ 将对方描述的情况名词化，强调「你说的这个情况」。在根据对方描述的情况做判断 → の；说明某件事本身 → こと。','排除信号：后件是针对条件的应对判断 → 必须用であれば，排除であって。'], compare:[]},
+
+  {id:'mairimasu', title:'まいります（行く/来るの自謙）', meaning:'我去/我来，自己移动时对上级使用',
+   examples:[{jp:'では、私が取ってまいります。', zh:'那我去取来。', key:'まいります'}],
+   notes:['おります = いるの自謙（我在这里），不是移动。いらっしゃいます = いるの尊他，用于对方，不能说自己。'], compare:[]},
+
+  {id:'nasaranaiyou', title:'なさらないよう（お願いします）', meaning:'请您不要做……，礼貌的否定请求',
+   examples:[{jp:'指定の駐車場以外には駐車なさらないよう、お願いいたします。', zh:'请您不要在指定停车场以外停车。', key:'なさらないよう'}],
+   notes:['なさる = するの尊他語。ないよう（に）+ お願い → 请求表达，直接配お願い ✅。ないため（に）→ 表目的，不直接配お願い ❌。'], compare:[]},
+
+  {id:'toiuyouni', title:'というように / というような', meaning:'像……这样，用于举例说明',
+   examples:[{jp:'「リマインド」というように、ビジネスでは英語由来の言葉が多い。', zh:'像「remind」这样，商务场合有很多来自英语的词汇。', key:'というように'}],
+   notes:['というように + 動詞 ✅。というような + 名詞 ✅。两个不能混用。'], compare:[]},
+
+  {id:'hokannaranai', title:'ほかならない', meaning:'正是……/无异于……，强烈断定，就是这件事',
+   examples:[
+     {jp:'これは努力の結果にほかならない。', zh:'这正是努力的结果。', key:'ほかならない'},
+     {jp:'睡眠時間を削ることは、回復の機会を奪うことにほかならない。', zh:'削减睡眠时间无异于剥夺恢复的机会。', key:'ほかならない'}],
+   notes:['说话人强烈断定A就等于B。排除信号：すぎない（只不过是，语气轻）、限らない（不一定，表不确定）→ 语气与ほかならない相反。'], compare:[]},
+
+  {id:'tonokoto', title:'とのことでした', meaning:'据说……/听说……，转述他人的话',
+   examples:[
+     {jp:'部長は明日休むとのことです。', zh:'听说部长明天休息。', key:'とのことです'},
+     {jp:'今日中に連絡してほしいとのことでした。', zh:'说是希望今天之内联系他。', key:'とのことでした'}],
+   notes:['说话人在转述第三方说过的话，是标准间接引用表达。','排除信号：说话人在直接表达自己的意思/命令 → 不用とのこと。'], compare:[]},
+
+  {id:'okagedesu', title:'おかげです / おかげで', meaning:'多亏了……/托……的福，感谢的归因',
+   examples:[{jp:'皆さんに応援していただいたおかげです。', zh:'多亏大家的支持。', key:'おかげです'}],
+   notes:['他人的好意是原因 → いただいたおかげ（自谦视角）或 くださったおかげ（尊他视角）。ことだと思います → 语气变推测，感谢意味变淡，不自然。'], compare:[]},
+
+  {id:'tosurutara', title:'使おうとしたら（とする + したら）', meaning:'正要做……的时候（触发意外发现），前件触发后件',
+   examples:[{jp:'懐中電灯を使おうとしたら、電池が切れていてつかなかった。', zh:'正要用手电筒，发现电池没电打不开。', key:'としたら'}],
+   notes:[],
+   compare:[
+     {label:'とする vs ようにする', text:'とする → 瞬间的尝试/意图。ようにする → 养成习惯/持续努力。'},
+     {label:'したら vs するなら', text:'したら → 顺序触发，发现意外结果。するなら → 条件假设，后件是建议。'}]},
+
+  {id:'nоtsuidehi', title:'のついでに', meaning:'顺便……，做主要事情的同时顺带做次要事情',
+   examples:[{jp:'図書館に行ったついでに、本を返してきた。', zh:'去图书馆的时候顺便把书还了。', key:'ついでに'}],
+   notes:['主次关系明确，ついでに后面是次要的附带行动。'], compare:[]},
+
+  {id:'tatokoro', title:'たところ（行動後の意外発見）', meaning:'做了……结果发现……，行动后的意外发现或结果',
+   examples:[
+     {jp:'調べたところ、間違いが見つかった。', zh:'查了一下，发现有错误。', key:'たところ'},
+     {jp:'病院に行ったところ、インフルエンザと診断された。', zh:'去了医院，被诊断为流感。', key:'たところ'}],
+   notes:[],
+   compare:[{label:'たところ vs た場合 vs た以上', text:'たところ → 做了结果发现（意外发现）。た場合 → 如果……的话（假设）。た以上 → 既然……了（责任/义务）。'}]},
+
+  {id:'tagaru', title:'たがる / たがらない', meaning:'第三者想要/不想做……，从外部观察他人的欲望',
+   examples:[
+     {jp:'子どもが薬を飲みたがらない。', zh:'孩子（看样子）不想吃药。', key:'たがらない'},
+     {jp:'散歩が大好きな犬が今日は行きたがらなかった。', zh:'平时爱散步的狗今天不想去了。', key:'たがらなかった'}],
+   notes:['たい → 说话人自己的愿望（第一人称）。たがる → 第三者的愿望（从外部观察）。'], compare:[]},
+
+  {id:'toiudakede', title:'というだけで', meaning:'就因为……/光是……就……，仅此一个理由导致大结果',
+   examples:[{jp:'人気歌手が愛用しているというだけで、1万個も売れたそうだ。', zh:'就因为人气歌手在用，据说卖出了1万个。', key:'というだけで'}],
+   notes:[], compare:[]},
+
+  {id:'naikana', title:'ないかな', meaning:'希望……/要是能……就好了，轻柔的期待愿望',
+   examples:[{jp:'早く夏休みにならないかな。', zh:'真希望暑假快点来啊。', key:'ないかな'}],
+   notes:['なるかな → 不知道会不会变成……（疑问/不确定）。ならないかな → 希望变成……（期待愿望）。注意不要搞反。'], compare:[]},
+
+  {id:'hazuganai', title:'はずがない', meaning:'不可能……，强烈否定某种可能性',
+   examples:[{jp:'学校の教育がこれまでと同じでいいはずがない。', zh:'学校教育不可能还和以前一样就好。', key:'はずがない'}],
+   notes:['比はずではない更强，表示说话人完全无法接受该可能性。'], compare:[]},
+
+  {id:'takiri', title:'たきり vs て以来', meaning:'たきり：做了之后就再没……（强调断绝）　て以来：自从……之后一直持续至今',
+   examples:[
+     {jp:'彼は出て行ったきり、戻ってこない。', zh:'他出去了之后就再没回来。', key:'たきり'},
+     {jp:'日本に来て以来、毎日日本語を勉強している。', zh:'自从来了日本，每天都在学日语。', key:'て以来'}],
+   notes:['たきり → 做了后就停止/再无后续（强调断绝）。て以来 → 从那以后一直持续到现在（强调持续）。'], compare:[]},
+
+  {id:'tehajimete', title:'て初めて', meaning:'通过……才第一次……，正是因为这件事才实现了某结果',
+   examples:[{jp:'失ってみて初めて、その大切さがわかった。', zh:'失去了才第一次明白它的重要。', key:'て初めて'}],
+   notes:[], compare:[]},
+
+  {id:'tamonoda', title:'たものだ', meaning:'真是……啊，回顾过去时的惊叹或感慨',
+   examples:[
+     {jp:'よくこんな昔の写真が今まで残っていたものだ。', zh:'这么老的照片居然保存到现在了。', key:'たものだ'},
+     {jp:'昔はよく遊んだものだ。', zh:'以前真是玩了不少啊。', key:'たものだ'}],
+   notes:[],
+   compare:[{label:'たものだ vs わけだ', text:'たものだ → 感叹/回顾（惊叹语气）。わけだ → 难怪/所以才……（逻辑结论）。'}]},
+
+  {id:'wakeda', title:'わけだ', meaning:'难怪/所以才……，根据前因得出合理的逻辑结论',
+   examples:[{jp:'毎日練習しているわけだ、上手なはずだ。', zh:'每天都在练，难怪那么厉害。', key:'わけだ'}],
+   notes:[], compare:[]},
+
+  {id:'younisuruhoшii', title:'ようにしてほしい', meaning:'希望对方做到让……变成……的状态',
+   examples:[{jp:'もっと数を増やして、たくさんの人が読めるようにしてほしい。', zh:'希望增加数量，让更多人能读到。', key:'ようにしてほしい'}],
+   notes:[],
+   compare:[{label:'四种「よう」组合', text:'ようにしてほしい → 希望对方做到（对方主体）。ようになりたい → 自己想变成能……（说话人自己）。ようにすることができる → 能做到让……变成……（陈述能力）。ようになろうとしている → 正在努力变成能……（说话人自己）。'}]},
+
+  {id:'nikaketeha', title:'にかけては', meaning:'在……方面/说到……，强调在某特定领域内顶尖，「这方面没人比得过」',
+   examples:[
+     {jp:'料理にかけては、彼女の右に出る者はいない。', zh:'说到做菜，没有人能比过她。', key:'にかけては'},
+     {jp:'パンを作ることにかけては一流の技術を持っている。', zh:'在做面包这方面拥有一流的技术。', key:'にかけては'}],
+   notes:[],
+   compare:[{label:'对比', text:'によっては → 根据……因……而异。を前にして → 在……面前（面对某人/某事）。を基にして → 以……为基础（依据）。'}]},
+
+  {id:'kirenai', title:'～きれない', meaning:'做不完/无法全部做到，数量或程度超出能力无法完成',
+   examples:[
+     {jp:'量が多すぎて食べきれなかった。', zh:'量太多了，吃不完。', key:'きれなかった'},
+     {jp:'たった3時間では全部の作品を見きれなかった。', zh:'只有3小时根本没能看完全部作品。', key:'きれなかった'}],
+   notes:['～きる → 完全做完/做到底（肯定）。～きれない → 做不完（否定）。'], compare:[]},
+
+  {id:'zunioku', title:'ずにおく', meaning:'有意识地不做……放着，主动决定暂时不做某事',
+   examples:[
+     {jp:'今日は返事をせずにおこう。', zh:'今天就先不回复吧。', key:'ずにおこう'},
+     {jp:'しばらく本は買わずにおこうと決めていたのに、つい買ってしまった。', zh:'明明决定了暂时不买书，却忍不住买了。', key:'ずにおこう'}],
+   notes:[], compare:[]},
+
+  {id:'totemo_nai', title:'とても～ない', meaning:'根本不/怎么也……不，否定句中表示完全无法达到',
+   examples:[
+     {jp:'この曲は難しすぎて、とても弾けそうにない。', zh:'这首曲子太难了，根本弹不来。', key:'とても'},
+     {jp:'とても信じられない。', zh:'怎么也无法相信。', key:'とても'}],
+   notes:['注意：とても单独用于肯定句 = 非常/很；用于否定句 = 根本不/怎么也……不。场合不同意思完全不同！'], compare:[]},
+
+  {id:'youdeite', title:'ようでいて', meaning:'看起来……但实际上……，表面和实质的反差',
+   examples:[{jp:'毎日日記を書くことは、簡単なようでいて、けっこう難しい。', zh:'每天坚持写日记，看起来简单，实际上相当难。', key:'ようでいて'}],
+   notes:[],
+   compare:[{label:'对比', text:'らしい → 听说/看起来（传闻推测），不表示反差。ようであれば → 如果看起来是……的话（条件假设）。'}]},
+
+  {id:'nosuehi', title:'の末に', meaning:'经过……之后（终于），强调经历漫长过程后的结果',
+   examples:[{jp:'約10年の工事の末に、昨年ようやく橋が完成した。', zh:'经过大约10年的工程，去年桥终于完工了。', key:'の末に'}],
+   notes:['常配ようやく，表示经历漫长等待后终于达成。'],
+   compare:[{label:'对比', text:'の際 → 在……之际（时机节点）。のたび → 每次……（反复发生）。のもと → 在……之下/基础上（条件依据）。'}]},
+
+  {id:'darakede', title:'だらけ', meaning:'满是……/到处都是……，某种不好的东西大量存在（通常负面）',
+   examples:[
+     {jp:'テレビの後ろ側は、すぐほこりだらけになってしまう。', zh:'电视背面很快就满是灰尘。', key:'だらけ'},
+     {jp:'泥だらけになった。', zh:'弄得满身是泥。', key:'だらけ'}],
+   notes:[],
+   compare:[{label:'对比', text:'きり → 只有/仅仅，或自从……就（限定/截止）。じゅう → 整个……/全……（范围，前接场所）。ぐらい → 大概/左右（程度估算）。'}]},
+
+  {id:'yarиnuku', title:'やり抜く / やりかける / やり直す / やりだす', meaning:'复合动词：完成度、方向、重启的区别',
+   examples:[
+     {jp:'10キロのコースを45分で走りきった。', zh:'用45分钟跑完了10公里。', key:'きった'},
+     {jp:'やりかけた仕事を後回しにした。', zh:'把做到一半的工作推后了。', key:'やりかけた'}],
+   notes:[],
+   compare:[{label:'四组对比', text:'やり抜く → 坚持到底/完成到最后（贯穿始终）。やりかける → 做到一半/没做完（开始但未完成）。やり直す → 重做/重新来过（从头再来）。やりだす → 开始做（动作的开始）。'}]},
+
+  {id:'masenyouni', title:'ませんように / ますように', meaning:'希望……不要……/希望能……，祈愿/许愿',
+   examples:[
+     {jp:'明日は雨が降りませんように。', zh:'希望明天不要下雨。', key:'ませんように'},
+     {jp:'試験に合格できますように。', zh:'希望能通过考试。', key:'ますように'}],
+   notes:['祈祷、许愿、睡前祈愿等场景，语气是真诚的愿望。'], compare:[]},
+
+  {id:'rebasuruhodo', title:'ばするほど（越……越……）', meaning:'越……越……，两件事成正比变化',
+   examples:[{jp:'泣くのを我慢しようとすればするほど、逆に涙はあふれ出した。', zh:'越想忍住不哭，反而眼泪越涌出来。', key:'すればするほど'}],
+   notes:[],
+   compare:[{label:'しようとする vs しそうになる', text:'しようとする → 主动意志尝试（想做某事）。しそうになる → 被动状态险些发生（快要……了）。'}]}
+];
+
+/* ===== 语法区 ===== */
+var sheet = document.getElementById('sheet');
+var quiz  = document.getElementById('quiz');
+var listBtn = document.getElementById('listBtn');
+var quizBtn = document.getElementById('quizBtn');
+
+function buildSheet(hlId){
+  sheet.innerHTML = '';
+  DATA.forEach(function(item){
+    var card = document.createElement('div');
+    card.className = 'g-card' + (item.id === hlId ? ' open highlight' : '');
+    card.id = 'g-' + item.id;
+
+    var head = document.createElement('div');
+    head.className = 'g-card-head';
+    head.innerHTML = '<span class="g-title">' + item.title + '</span>'
+      + '<span class="g-meaning">' + item.meaning + '</span>'
+      + '<span class="g-chevron">▶</span>';
+    head.addEventListener('click', function(){
+      card.classList.toggle('open');
+      card.classList.remove('highlight');
+    });
+    card.appendChild(head);
+
+    var body = document.createElement('div');
+    body.className = 'g-body';
+
+    if(item.examples.length){
+      var s = document.createElement('div'); s.className = 'g-section';
+      var l = document.createElement('div'); l.className = 'g-label'; l.textContent = '例句';
+      s.appendChild(l);
+      item.examples.forEach(function(ex){
+        var b = document.createElement('div'); b.className = 'g-ex';
+        b.innerHTML = '<div class="jp">' + ex.jp + '</div><div class="zh">' + ex.zh + '</div>';
+        s.appendChild(b);
+      });
+      body.appendChild(s);
+    }
+    if(item.notes.length){
+      var ns = document.createElement('div'); ns.className = 'g-section';
+      var nl = document.createElement('div'); nl.className = 'g-label'; nl.textContent = '要点';
+      ns.appendChild(nl);
+      item.notes.forEach(function(n){
+        var b = document.createElement('div'); b.className = 'g-note'; b.textContent = n;
+        ns.appendChild(b);
+      });
+      body.appendChild(ns);
+    }
+    if(item.compare.length){
+      var cs = document.createElement('div'); cs.className = 'g-section';
+      var cl = document.createElement('div'); cl.className = 'g-label'; cl.textContent = '区别/对比';
+      cs.appendChild(cl);
+      item.compare.forEach(function(c){
+        var b = document.createElement('div'); b.className = 'g-compare';
+        b.innerHTML = '<strong>' + c.label + '</strong><br>' + c.text;
+        cs.appendChild(b);
+      });
+      body.appendChild(cs);
+    }
+
+    card.appendChild(body);
+    sheet.appendChild(card);
+  });
+
+  if(hlId){
+    var t = document.getElementById('g-' + hlId);
+    if(t){ setTimeout(function(){ t.scrollIntoView({behavior:'smooth', block:'center'}); }, 100); }
+  }
+}
+
+/* ===== 题库：只收录有 key 且 key 实际出现在 jp 里的例句 ===== */
+function buildPool(){
+  var pool = [];
+  DATA.forEach(function(item){
+    item.examples.forEach(function(ex){
+      if(ex.key && ex.jp.indexOf(ex.key) >= 0){
+        pool.push({item: item, ex: ex});
+      }
+    });
+  });
+  return pool;
+}
+var POOL = buildPool();
+
+/* ===== 测试逻辑 ===== */
+var score = 0, asked = 0;
+
+function shuffle(a){
+  for(var i=a.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+
+function newQuestion(){
+  var entry = POOL[Math.floor(Math.random()*POOL.length)];
+  var correctTitle = entry.item.title;
+  var key = entry.ex.key;
+
+  // 挖空：把 key 替换成黑色方块
+  var blanked = entry.ex.jp.replace(key, '<span class="q-blank"></span>');
+
+  // 四个选项：正确 title + 3个随机其他 title
+  var wrongItems = DATA.filter(function(d){ return d.id !== entry.item.id; });
+  shuffle(wrongItems);
+  var opts = [correctTitle];
+  for(var i=0;i<wrongItems.length && opts.length<4;i++){ opts.push(wrongItems[i].title); }
+  shuffle(opts);
+
+  var html = '<div class="q-score">正解 ' + score + ' / ' + asked + '</div>';
+  html += '<div class="q-prompt">＿＿＿ に入る語法は？</div>';
+  html += '<div class="q-sentence"><div class="q-jp">' + blanked + '</div>'
+        + '<div class="q-zh">' + entry.ex.zh + '</div></div>';
+  opts.forEach(function(o){
+    html += '<button class="opt" data-v="' + o.replace(/"/g,'&quot;') + '">' + o + '</button>';
+  });
+  quiz.innerHTML = html;
+
+  var btns = quiz.querySelectorAll('.opt');
+  for(var i=0;i<btns.length;i++){
+    btns[i].addEventListener('click', function(){ doAnswer(this, correctTitle, entry.item.id); });
+  }
+}
+
+function doAnswer(btn, correct, itemId){
+  asked++;
+  var chosen = btn.getAttribute('data-v');
+  var isRight = (chosen === correct);
+  if(isRight){ score++; } else { btn.classList.add('wrong'); }
+
+  quiz.querySelectorAll('.opt').forEach(function(b){
+    b.classList.add('locked');
+    if(b.getAttribute('data-v') === correct){ b.classList.add('right'); }
+  });
+
+  var s = quiz.querySelector('.q-score');
+  if(s){ s.textContent = '正解 ' + score + ' / ' + asked; }
+
+  var fb = document.createElement('div');
+  fb.className = 'q-feedback';
+  if(isRight){
+    fb.textContent = '✓ 正解！';
+  } else {
+    fb.innerHTML = '✗ 正确答案是「' + correct + '」。<a id="go-ref">→ 查看该语法</a>';
+  }
+  quiz.appendChild(fb);
+
+  if(!isRight){
+    document.getElementById('go-ref').addEventListener('click', function(){
+      setMode('list', itemId);
+    });
+  }
+
+  var nb = document.createElement('button');
+  nb.className = 'btn next-btn'; nb.textContent = '次へ →';
+  nb.addEventListener('click', newQuestion);
+  quiz.appendChild(nb);
+}
+
+/* ===== 模式切换 ===== */
+function setMode(m, hlId){
+  if(m === 'list'){
+    sheet.style.display = '';
+    quiz.classList.remove('active');
+    listBtn.classList.add('on');
+    quizBtn.classList.remove('on');
+    buildSheet(hlId || null);
+  } else {
+    sheet.style.display = 'none';
+    quiz.classList.add('active');
+    quizBtn.classList.add('on');
+    listBtn.classList.remove('on');
+    score = 0; asked = 0;
+    newQuestion();
+  }
+}
+
+listBtn.addEventListener('click', function(){ setMode('list'); });
+quizBtn.addEventListener('click', function(){ setMode('quiz'); });
+setMode('list');
+</script>
+</body>
+</html>
