@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AKOMUN NetEase Link Test</title>
+<style>
+body{margin:0;background:#090909;color:#eee;font-family:Arial,sans-serif}
+.wrap{max-width:420px;margin:auto;padding:22px}
+img{width:100%;display:block;border:1px solid #333}
+a,button{display:block;width:100%;box-sizing:border-box;margin-top:14px;padding:15px;background:#181818;color:#fff;border:1px solid #444;text-align:center;text-decoration:none;font-size:16px}
+.note{color:#999;font-size:13px;line-height:1.6;margin-top:14px}
+h2{letter-spacing:1px}
+</style>
+<div class="wrap">
+<h2>AKOMUN / NetEase Test</h2>
+<img src="198six_tokyo.jpeg" alt="198six Tokyo">
+<p>198six Tokyo / Yximalloo</p>
+
+<a href="https://music.163.com/album?id=156069831">测试1：music.163.com/album?id=156069831</a>
+
+<a href="https://y.music.163.com/m/album?id=156069831">测试2：y.music.163.com/m/album?id=156069831</a>
+
+<a href="https://music.163.com/#/album?id=156069831">测试3：music.163.com/#/album?id=156069831</a>
+
+<button onclick="openApp()">测试4：先尝试 App，再 fallback 网页</button>
+
+<div class="note">
+测试顺序：先点1，再点2，再点3。<br>
+如果某个能直接打开网易云 App，就用那个。<br>
+测试4 会先尝试唤起网易云 App，失败后 1.2 秒跳网页。
+</div>
+</div>
+
+<script>
+function openApp(){
+  var fallback = "https://music.163.com/album?id=156069831";
+  // 这个 scheme 不保证能打开指定专辑，只是测试能否唤起网易云 App。
+  var scheme = "orpheuswidget://";
+  window.location.href = scheme;
+  setTimeout(function(){
+    window.location.href = fallback;
+  }, 1200);
+}
+</script>
+</html>
