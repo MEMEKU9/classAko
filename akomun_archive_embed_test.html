@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AKOMUN Archive Embed Test</title>
+<style>
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:#050505;
+    color:#eee;
+    font-family:Arial,sans-serif;
+  }
+  .app{
+    max-width:430px;
+    margin:auto;
+    min-height:100vh;
+    padding:18px;
+  }
+  h1{
+    font-size:22px;
+    letter-spacing:1px;
+    margin:0 0 6px;
+  }
+  .sub{
+    color:#888;
+    font-size:13px;
+    margin-bottom:16px;
+  }
+  .panel{
+    border:1px solid #333;
+    background:#101010;
+    padding:12px;
+  }
+  .reader{
+    width:100%;
+    height:72vh;
+    border:1px solid #444;
+    background:#000;
+  }
+  .btns{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:12px;
+  }
+  a{
+    display:block;
+    color:#fff;
+    background:#181818;
+    border:1px solid #444;
+    padding:12px;
+    text-align:center;
+    text-decoration:none;
+    font-size:14px;
+  }
+  .note{
+    color:#aaa;
+    font-size:12px;
+    line-height:1.55;
+    margin-top:12px;
+  }
+</style>
+
+<div class="app">
+  <h1>AKOMUN</h1>
+  <div class="sub">Archive BookReader embed test</div>
+
+  <div class="panel">
+    <iframe
+      class="reader"
+      src="https://archive.org/embed/OyasumiPunpunVolumen05/page/n72/mode/1up"
+      allowfullscreen
+      webkitallowfullscreen
+      loading="lazy">
+    </iframe>
+
+    <div class="btns">
+      <a href="https://archive.org/details/OyasumiPunpunVolumen05/page/n72/mode/1up" target="_blank">
+        外部打开
+      </a>
+      <a href="https://archive.org/embed/OyasumiPunpunVolumen05/page/n72/mode/1up" target="_blank">
+        单独打开嵌入页
+      </a>
+    </div>
+
+    <div class="note">
+      测试目标：确认 Internet Archive BookReader 能否在 AKOMUN 页面内 iframe 嵌入。<br>
+      如果上方能显示阅读器，说明漫画模块可以做成内嵌阅读。<br>
+      如果显示空白或拒绝连接，就只能外部打开。
+    </div>
+  </div>
+</div>
+</html>
