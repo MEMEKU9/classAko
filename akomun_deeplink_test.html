@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AKOMUN Deeplink Test</title>
+<style>
+body{margin:0;background:#080808;color:#eee;font-family:Arial,sans-serif}
+.wrap{max-width:430px;margin:auto;padding:20px}
+img{width:100%;display:block;border:1px solid #333;margin-bottom:14px}
+button{width:100%;margin:8px 0;padding:12px;background:#171717;color:#fff;border:1px solid #444;text-align:left;font-size:15px}
+button span{display:block;color:#999;font-size:11px;margin-top:5px;word-break:break-all}
+.note{color:#999;font-size:13px;line-height:1.6;margin:14px 0}
+.good{border-color:#666;background:#202020}
+</style>
+<div class="wrap">
+<h2>AKOMUN / NetEase Deeplink Test</h2>
+<img src="198six_tokyo.jpeg" alt="198six Tokyo">
+<div class="note">
+专辑 ID：156069831<br>
+逐个点。能直接打开网易云并进入这张专辑的，就是成功格式。<br>
+如果只打开首页，说明只能唤起 App，不能定位专辑。
+</div>
+
+<button onclick="go('orpheuswidget://album?id=156069831')">测试 1<br><span>orpheuswidget://album?id=156069831</span></button>
+<button onclick="go('orpheuswidget://album/156069831')">测试 2<br><span>orpheuswidget://album/156069831</span></button>
+<button onclick="go('orpheuswidget://m/album?id=156069831')">测试 3<br><span>orpheuswidget://m/album?id=156069831</span></button>
+<button onclick="go('orpheuswidget://music.163.com/album?id=156069831')">测试 4<br><span>orpheuswidget://music.163.com/album?id=156069831</span></button>
+<button onclick="go('orpheuswidget://music.163.com/#/album?id=156069831')">测试 5<br><span>orpheuswidget://music.163.com/#/album?id=156069831</span></button>
+<button onclick="go('orpheuswidget://y.music.163.com/m/album?id=156069831')">测试 6<br><span>orpheuswidget://y.music.163.com/m/album?id=156069831</span></button>
+<button onclick="go('orpheus://album?id=156069831')">测试 7<br><span>orpheus://album?id=156069831</span></button>
+<button onclick="go('orpheus://album/156069831')">测试 8<br><span>orpheus://album/156069831</span></button>
+<button onclick="go('neteasecloudmusic://album?id=156069831')">测试 9<br><span>neteasecloudmusic://album?id=156069831</span></button>
+<button onclick="go('neteasecloudmusic://album/156069831')">测试 10<br><span>neteasecloudmusic://album/156069831</span></button>
+<button onclick="go('cloudmusic://album?id=156069831')">测试 11<br><span>cloudmusic://album?id=156069831</span></button>
+<button onclick="go('cloudmusic://album/156069831')">测试 12<br><span>cloudmusic://album/156069831</span></button>
+<button onclick="go('music163://album?id=156069831')">测试 13<br><span>music163://album?id=156069831</span></button>
+<button onclick="go('music163://album/156069831')">测试 14<br><span>music163://album/156069831</span></button>
+<button onclick="go('orpheuswidget://playlist?id=156069831')">测试 15<br><span>orpheuswidget://playlist?id=156069831</span></button>
+<button onclick="go('orpheuswidget://song?id=156069831')">测试 16<br><span>orpheuswidget://song?id=156069831</span></button>
+
+<button class="good" onclick="go('https://music.163.com/album?id=156069831')">
+Fallback 网页<br><span>https://music.163.com/album?id=156069831</span>
+</button>
+</div>
+
+<script>
+function go(url){
+  location.href = url;
+}
+</script>
+</html>
