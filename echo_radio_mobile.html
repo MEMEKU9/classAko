@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Echo Radio Mobile Prototype</title>
+<style>
+  :root {
+    color-scheme: dark;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at top, rgba(255,255,255,.08), transparent 36%),
+      linear-gradient(180deg, #050505, #111);
+    color: #eee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+  }
+  .phone {
+    width: min(430px, 100%);
+    min-height: 680px;
+    border: 1px solid #333;
+    background: #0b0b0b;
+    box-shadow: 0 0 48px rgba(255,255,255,.08);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid #2b2b2b;
+    padding-bottom: 14px;
+  }
+  h1 {
+    margin: 0;
+    font-size: 30px;
+    letter-spacing: -1px;
+  }
+  .status {
+    color: #999;
+    font-size: 12px;
+    text-align: right;
+    line-height: 1.5;
+  }
+  .screen {
+    border: 1px solid #333;
+    background: #050505;
+    padding: 16px;
+    min-height: 170px;
+  }
+  .label {
+    color: #777;
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+  .title {
+    font-size: 21px;
+    line-height: 1.25;
+  }
+  .artist {
+    color: #aaa;
+    margin-top: 8px;
+    font-size: 14px;
+  }
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 14px;
+  }
+  .tag {
+    border: 1px solid #444;
+    padding: 4px 7px;
+    color: #aaa;
+    font-size: 12px;
+  }
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  button {
+    border: 1px solid #444;
+    background: #101010;
+    color: #eee;
+    padding: 15px 10px;
+    font: inherit;
+    font-size: 15px;
+    border-radius: 0;
+  }
+  button:active {
+    transform: translateY(1px);
+    background: #1b1b1b;
+  }
+  .wide { grid-column: 1 / -1; }
+  audio {
+    width: 100%;
+    filter: grayscale(1);
+  }
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .track {
+    border: 1px solid #2e2e2e;
+    padding: 12px;
+    background: #0f0f0f;
+  }
+  .track:active {
+    background: #1a1a1a;
+  }
+  .track-name {
+    font-size: 15px;
+  }
+  .track-meta {
+    color: #888;
+    font-size: 12px;
+    margin-top: 5px;
+  }
+  pre {
+    margin: 0;
+    border-top: 1px solid #2b2b2b;
+    padding-top: 14px;
+    color: #777;
+    white-space: pre-wrap;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+</style>
+</head>
+<body>
+  <main class="phone">
+    <section class="top">
+      <div>
+        <h1>Echo Radio</h1>
+        <div class="artist">mobile prototype</div>
+      </div>
+      <div class="status">
+        provider: public-demo<br>
+        mode: underground dj
+      </div>
+    </section>
+
+    <section class="screen">
+      <div class="label">NOW PLAYING</div>
+      <div id="title" class="title">Nothing selected</div>
+      <div id="artist" class="artist">tap a track below</div>
+      <div id="tags" class="tags"></div>
+    </section>
+
+    <audio id="audio" controls playsinline preload="none"></audio>
+
+    <section class="controls">
+      <button onclick="prevTrack()">PREV</button>
+      <button onclick="nextTrack()">NEXT</button>
+      <button class="wide" onclick="randomTrack()">ECHO CHOOSE</button>
+    </section>
+
+    <section id="list" class="list"></section>
+
+    <pre id="log">memory log waiting...</pre>
+  </main>
+
+<script>
+const tracks = [
+  {
+    id: "demo_001",
+    title: "SoundHelix Song 1",
+    artist: "Public test audio",
+    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    tags: ["demo", "public", "long-form"]
+  },
+  {
+    id: "demo_002",
+    title: "SoundHelix Song 2",
+    artist: "Public test audio",
+    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+    tags: ["prototype", "web-audio", "radio"]
+  },
+  {
+    id: "demo_003",
+    title: "SoundHelix Song 3",
+    artist: "Public test audio",
+    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+    tags: ["echo", "provider", "test"]
+  }
+];
+
+let current = -1;
+const audio = document.querySelector("#audio");
+
+function renderList() {
+  const list = document.querySelector("#list");
+  list.innerHTML = "";
+  tracks.forEach((track, index) => {
+    const item = document.createElement("div");
+    item.className = "track";
+    item.innerHTML = `
+      <div class="track-name">${track.title}</div>
+      <div class="track-meta">${track.artist} / ${track.tags.join(", ")}</div>
+    `;
+    item.onclick = () => play(index);
+    list.appendChild(item);
+  });
+}
+
+function play(index) {
+  current = index;
+  const track = tracks[current];
+  document.querySelector("#title").textContent = track.title;
+  document.querySelector("#artist").textContent = track.artist;
+  document.querySelector("#tags").innerHTML = track.tags.map(t => `<span class="tag">${t}</span>`).join("");
+  audio.src = track.url;
+  audio.play();
+
+  const event = {
+    event: "play",
+    provider: "public-demo",
+    track_id: track.id,
+    tags: track.tags,
+    time: new Date().toISOString()
+  };
+  document.querySelector("#log").textContent =
+    "aesthetic memory event:\n" + JSON.stringify(event, null, 2);
+}
+
+function nextTrack() {
+  play((current + 1 + tracks.length) % tracks.length);
+}
+
+function prevTrack() {
+  play((current - 1 + tracks.length) % tracks.length);
+}
+
+function randomTrack() {
+  play(Math.floor(Math.random() * tracks.length));
+}
+
+renderList();
+</script>
+</body>
+</html>
