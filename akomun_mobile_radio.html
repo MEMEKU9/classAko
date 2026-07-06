@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>AKOMUN Mobile Prototype</title>
+<style>
+  * { box-sizing: border-box; }
+  :root {
+    --bg: #050505;
+    --panel: rgba(18,18,18,.78);
+    --line: rgba(255,255,255,.18);
+    --text: #f2f2f2;
+    --sub: #8b8b8b;
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 50% 14%, rgba(255,255,255,.08), transparent 28%),
+      linear-gradient(#030303, #101010);
+    color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    overflow-x: hidden;
+  }
+  .app {
+    width: min(430px, 100vw);
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 34px 20px 92px;
+    position: relative;
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  h1 {
+    margin: 0;
+    font-size: 30px;
+    letter-spacing: 1px;
+    font-weight: 500;
+  }
+  .subtitle {
+    color: var(--sub);
+    font-size: 14px;
+    margin-top: 3px;
+  }
+  .menu {
+    border: 1px solid var(--line);
+    padding: 10px 14px;
+    color: #bbb;
+    background: transparent;
+    font: inherit;
+  }
+  .stage {
+    position: relative;
+    height: 515px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .ako {
+    position: absolute;
+    left: 4px;
+    top: 45px;
+    width: 205px;
+    height: 415px;
+  }
+  .halo {
+    position: absolute;
+    left: 88px;
+    top: 0;
+    width: 45px;
+    height: 13px;
+    border: 2px solid rgba(255,255,255,.75);
+    border-radius: 50%;
+    transform: rotate(-7deg);
+  }
+  .head {
+    position: absolute;
+    left: 58px;
+    top: 55px;
+    width: 88px;
+    height: 96px;
+    background: #ececec;
+    clip-path: polygon(19% 10%, 80% 6%, 100% 48%, 72% 96%, 24% 91%, 0 44%);
+    filter: drop-shadow(0 0 1px #fff);
+  }
+  .eye {
+    position: absolute;
+    top: 108px;
+    width: 10px;
+    height: 5px;
+    background: #111;
+    border-radius: 50%;
+  }
+  .eye.l { left: 80px; }
+  .eye.r { left: 119px; }
+  .neck {
+    position: absolute;
+    left: 96px;
+    top: 145px;
+    width: 14px;
+    height: 36px;
+    background: #ddd;
+  }
+  .body {
+    position: absolute;
+    left: 44px;
+    top: 178px;
+    width: 120px;
+    height: 230px;
+    background: #e8e8e8;
+    clip-path: polygon(22% 0, 78% 0, 88% 100%, 14% 100%);
+    border: 1px solid #999;
+  }
+  .dot {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #777;
+    border-radius: 50%;
+  }
+  .antenna {
+    position: absolute;
+    width: 95px;
+    height: 90px;
+    border-top: 2px solid #777;
+    border-radius: 50%;
+  }
+  .antenna.left { left: 0; top: 38px; transform: rotate(-38deg); }
+  .antenna.right { left: 108px; top: 34px; transform: rotate(35deg); }
+  .stand {
+    position: absolute;
+    left: 165px;
+    top: 150px;
+    width: 2px;
+    height: 300px;
+    background: #777;
+  }
+  .flame {
+    position: absolute;
+    left: 158px;
+    top: 132px;
+    width: 15px;
+    height: 35px;
+    background: #ddd;
+    clip-path: polygon(50% 0, 76% 55%, 51% 100%, 22% 58%);
+  }
+  .speech {
+    position: absolute;
+    left: 12px;
+    bottom: 42px;
+    border: 1px solid var(--line);
+    background: rgba(0,0,0,.42);
+    padding: 10px 12px;
+    color: #ddd;
+    font-size: 14px;
+  }
+  .tv {
+    position: absolute;
+    right: 0;
+    top: 63px;
+    width: 155px;
+    border: 1px solid var(--line);
+    background: rgba(20,20,20,.72);
+    padding: 12px 12px 32px;
+  }
+  .tv img {
+    width: 100%;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+    display: block;
+  }
+  .led {
+    position: absolute;
+    left: 14px;
+    bottom: 12px;
+    width: 8px;
+    height: 8px;
+    background: #1fa0ff;
+    border-radius: 50%;
+  }
+  .tv-label {
+    position: absolute;
+    left: 32px;
+    bottom: 9px;
+    color: var(--sub);
+    font-size: 12px;
+  }
+  .button-open {
+    position: absolute;
+    right: 0;
+    top: 305px;
+    width: 170px;
+    height: 94px;
+    border: 1px solid var(--line);
+    background: rgba(18,18,18,.82);
+    color: var(--text);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    font-size: 16px;
+  }
+  .play {
+    width: 0;
+    height: 0;
+    border-top: 22px solid transparent;
+    border-bottom: 22px solid transparent;
+    border-left: 34px solid white;
+  }
+  .card {
+    margin-top: 22px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    padding: 26px 24px;
+  }
+  .album {
+    font-size: 30px;
+    line-height: 1.15;
+  }
+  .artist {
+    margin-top: 12px;
+    color: var(--sub);
+    font-size: 18px;
+  }
+  .quote {
+    margin-top: 28px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255,255,255,.15);
+    color: #ddd;
+  }
+  nav {
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: min(430px, 100vw);
+    height: 72px;
+    background: rgba(8,8,8,.94);
+    border-top: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+  }
+  nav a {
+    color: #aaa;
+    text-decoration: none;
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    letter-spacing: .8px;
+  }
+  nav a.active { color: #fff; }
+  .tiny {
+    color: #666;
+    font-size: 11px;
+    margin-top: 14px;
+  }
+</style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <h1>AKOMUN</h1>
+        <div class="subtitle">mobile prototype</div>
+      </div>
+      <button class="menu">MENU</button>
+    </header>
+
+    <section class="stage">
+      <div class="ako">
+        <div class="halo"></div>
+        <div class="antenna left"></div>
+        <div class="antenna right"></div>
+        <div class="head"></div>
+        <div class="eye l"></div>
+        <div class="eye r"></div>
+        <div class="neck"></div>
+        <div class="body"></div>
+        <div class="dot" style="left:92px;top:208px"></div>
+        <div class="dot" style="left:106px;top:250px"></div>
+        <div class="dot" style="left:84px;top:303px"></div>
+        <div class="stand"></div>
+        <div class="flame"></div>
+        <div class="speech">ボク、これ好き。</div>
+      </div>
+
+      <div class="tv">
+        <img src="198six_tokyo.jpeg" alt="198six Tokyo cover">
+        <div class="led"></div>
+        <div class="tv-label">TV-01</div>
+      </div>
+
+      <a class="button-open" href="https://163cn.tv/bauESgqB" target="_blank" rel="noopener">
+        <span class="play"></span>
+        <span>在网易云打开</span>
+      </a>
+    </section>
+
+    <section class="card">
+      <div class="album">198six Tokyo</div>
+      <div class="artist">Yximalloo</div>
+      <div class="quote">「夜に聞く。」</div>
+      <div class="tiny">source: NetEase Music share link</div>
+    </section>
+  </main>
+
+  <nav>
+    <a class="active" href="#">RADIO</a>
+    <a href="#">COLLECTION</a>
+    <a href="#">TALK</a>
+    <a href="#">NOTE</a>
+  </nav>
+</body>
+</html>
